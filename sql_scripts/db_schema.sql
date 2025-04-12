@@ -23,9 +23,10 @@ CREATE TABLE store (
 	store_num INT PRIMARY KEY,
 	city VARCHAR(50) NOT NULL,
 	state VARCHAR (15) NOT NULL,
-	zip_code CHAR(5) NOT NULL,
+	zip_code CHAR(5) NOT NULL CHECK(zip_code REGEXP '^[0-9]{5}$'),
 	address VARCHAR (75) NOT NULL,
-	phone_number CHAR(12) NOT NULL
+	phone_number CHAR(12) NOT NULL CHECK (phone_number REGEXP '^[0-9]{3}-[0-9]{3}-[0-9]{4}$'),
+    UNIQUE (zip_code, address)
 );
 
 DROP TABLE IF EXISTS hrs_operating;
@@ -43,7 +44,6 @@ CREATE TABLE vendor (
     
 );
 
-
 DROP TABLE IF EXISTS reorder_requests;
 CREATE TABLE reorder_requests(
 	request_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -56,18 +56,6 @@ CREATE TABLE reorder_requests(
 	cost	DECIMAL NOT NULL,
 	viewed BOOLEAN NOT NULL
 );
-
-
-DROP TABLE IF EXISTS order_items;
-CREATE TABLE order_items (
-	order_id INT PRIMARY KEY, 
-	product CHAR(12),
-	quantity INT,
-	FOREIGN KEY (order_id) REFERENCES purchases(purchase_id),
-	FOREIGN KEY (product) REFERENCES bmart_products(upc)
-);
-
-
 
 DROP TABLE IF EXISTS customers;
 CREATE TABLE customers(
@@ -93,6 +81,15 @@ CREATE TABLE purchases(
 	FOREIGN KEY (customer) REFERENCES customers(customer_id)
 );
 
+DROP TABLE IF EXISTS order_items;
+CREATE TABLE order_items (
+	order_id INT PRIMARY KEY, 
+	product CHAR(12),
+	quantity INT,
+	FOREIGN KEY (order_id) REFERENCES purchases(purchase_id),
+	FOREIGN KEY (product) REFERENCES bmart_products(upc)
+);
+
 DROP TABLE IF EXISTS shipment;
 CREATE TABLE shipment (
 	shipment_no INT AUTO_INCREMENT PRIMARY KEY,
@@ -115,9 +112,6 @@ CREATE TABLE shipment_items (
 	Reorder_id INT NOT NULL
 );
 	
-	
-
-
 DROP TABLE IF EXISTS inventory;
 CREATE TABLE inventory (
 	inventory_id INTEGER AUTO_INCREMENT PRIMARY KEY,
@@ -137,6 +131,4 @@ CREATE TABLE product_types (
 	type VARCHAR(30),
 	FOREIGN KEY (product) REFERENCES bmart_products(upc),
 	FOREIGN KEY (type) REFERENCES types(type_name)
-    
 );
-
