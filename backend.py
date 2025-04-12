@@ -29,6 +29,32 @@ def main():
         if err.errno == errorcode.CR_CONNECTION_ERROR:
             print("Could not connect to Database!")
 
+def reorder(store):
+    """
+    Executes a reorder requests for Bmart
+    """
+
+    #Check Database for needed products
+
+    #Checks previous reorder requests and shipments to make sure we haven't already ordered needed items
+
+    #Determine Final items and item amounts needed
+
+    #Send those orders to the vendors
+
+    #Store redorder in Database
+    pass
+
+def vendor_shipment():
+    
+    pass
+
+def stock():
+    pass
+
+def online_order():
+    pass
+
 
 if __name__ == "__main__":
     main()
