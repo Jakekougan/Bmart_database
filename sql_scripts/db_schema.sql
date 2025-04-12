@@ -20,7 +20,7 @@ FOREIGN KEY (type) REFERENCES types(type_name)
 
 DROP TABLE IF EXISTS store;
 CREATE TABLE store (
-	store_num INT PRIMARY KEY,
+	store_num INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
 	city VARCHAR(50) NOT NULL,
 	state VARCHAR (15) NOT NULL,
 	zip_code CHAR(5) NOT NULL CHECK(zip_code REGEXP '^[0-9]{5}$'),
