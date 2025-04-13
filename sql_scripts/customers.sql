@@ -17,12 +17,29 @@ INSERT INTO customers (first_name, last_name, city, state, zip_code, address, ph
 ('Daffy', 'Duck', 'Los Angeles', 'CA', '90001', '1673 Bibo Drive', '123-456-7890', 'dduck@gmail.com'),
 ('Alex', 'Mason', 'Fairbanks', 'AL', '99703', '2010 Kino Street', '867-992-1011', 'alexmas@cia.gov'),
 ('Tony', 'Stank', 'Malibu', 'CA', '90263', '1637 Walker Drive', "111-222-3333", 'stanky@gmail.com'),
-('Benny', 'Ballgame', 'Orlando', 'FL', '32789', '1214 Noway Road', '899-234-5765', 'bennyandthejets@gmail.com'),
+('Benny', 'Ballgame', 'Orlando', 'FL', '32789', '1214 Noway Road', '899-234-5765', 'bennyandthejets@gmail.co/m'),
 ('Johnny', 'Test', 'Seattle', 'WA', '98039', '212 Main Street', '102-602-4545', 'crimelordfr@gmail.com'),
 ('Randy', 'Orton', 'St Louis', 'MO', '63101', '123 Winner Road', '619-355-0000', 'ottanowhere@gmail.com'),
 ('Kendra', 'Daniels', 'Boston', 'MA', '02108', '1221 Kellion Drive', '444-555-9999', 'kdaniels@ishimaura.com'),
 ('Kayla', 'Halawa', 'Minneapolis', 'MN', '55401', '2 Night Street', '617-716-0000', 'dartyparty6@gmail.com'),
-('Madeleine', 'Dartmouth', 'Iowa City', 'IO', '52240', '8616 Peter Drive', '444-000-9292', 'mdarty@gmail.com');
-('Lena', 'Tran', 'Naperville', 'IL', '60540', '812 Maple Grove Ln', '6305557821', 'lena.tran@example.com');
+('Jake', 'Miller', 'Peoria', 'IL', '61604', '1025 Oakwood Dr', '3095554321', 'jake.miller@example.com');
+("Liam", "Smith", "Chicago", "Illinois", "60616", "1310 S State St", "312-555-0101", "lsmith@gmail.com"),
+("Noah", "Johnson", "Brooklyn", "New York", "11201", "45 Court St", "718-819-0122", "njohnson2@gmail.com"),
+("Oliver", "Brown", "Los Angeles", "California", "90017", "850 S Grand Ave", "213-855-0189", "obrown@gmail.com"),
+("Henry", "Jones", "Phoenix", "Arizona", "85004", "101 N 1st Ave", "602-910-3819", "hjones@gmail.com"),
+("Lukas", "Garcia", "Miami", "Florida", "33130", "234 SW 8th St", "305-824-2941", "lgarcia@gmail.com"),
+("Benjamin", "Ramirez", "San Diego", "California", "92101", "600 W Broadway", "619-293-9422", "bramirez@gmail.com"),
+("Owen", "Miller", "Boston", "Massachusetts", "02108", "1 Beacon St", "617-249-0123", "omiller@gmail.com"),
+("Jackson", "Rodriguez", "Seattle", "Washington", "98101", "1420 5th Ave", "206-111-4012", "jramirez@gmail.com"),
+("Gabriel", "Martinez", "Minneapolis", "Minnesota", "55402", "90 S 7th St", "612-999-1000", "gmartinez@gmail.com"),
+("Isabella", "Hernandez", "Denver", "Colorado", "80202", "999 18th St", "720-300-9100", "ihernndez@gmail.com"),
+("Elizabeth", "Thomas", "Little Rock", "Arkansas", "72201", "400 W Capitol Ave", "501-091-9481", "miataylor@gmail.com"),
+("Mia", "Taylor", "Houston", "Texas", "77002", "1001 McKinney St", "713-218-9021", "mtaylor@gmail.com"),
+("Ava", "Moore", "Washington", "DC", "20002", "400 Massachusetts Ave NE", "202-498-9351", "avamoore@gmail.com"),
+("Evelyn", "Lee", "Philadelphia", "Pennsylvania", "19107", "1234 Market St", "215-349-9521", "elee@gmail.com"),
+("Cench", "Cee", "Atlanta", "Georgia", "30303", "200 Peachtree St NW", "404-525-9481", "cenchcee@gmail.com")
+
+
+
 
 SELECT * from customers;
