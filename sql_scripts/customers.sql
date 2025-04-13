@@ -23,5 +23,6 @@ INSERT INTO customers (first_name, last_name, city, state, zip_code, address, ph
 ('Kendra', 'Daniels', 'Boston', 'MA', '02108', '1221 Kellion Drive', '444-555-9999', 'kdaniels@ishimaura.com'),
 ('Kayla', 'Halawa', 'Minneapolis', 'MN', '55401', '2 Night Street', '617-716-0000', 'dartyparty6@gmail.com'),
 ('Madeleine', 'Dartmouth', 'Iowa City', 'IO', '52240', '8616 Peter Drive', '444-000-9292', 'mdarty@gmail.com');
+('Lena', 'Tran', 'Naperville', 'IL', '60540', '812 Maple Grove Ln', '6305557821', 'lena.tran@example.com');
 
 SELECT * from customers;
