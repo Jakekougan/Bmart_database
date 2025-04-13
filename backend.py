@@ -83,7 +83,7 @@ def stock(store, shipment, shipment_items):
     Documentation here
     """
 
-    #
+    #Stock processes when there are new shipment and the date of restock.
 
     """
     Returns should include
