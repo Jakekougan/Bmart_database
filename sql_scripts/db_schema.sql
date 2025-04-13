@@ -7,8 +7,8 @@ DROP TABLE IF EXISTS products;
 CREATE TABLE bmart_products (
 	upc CHAR(12) PRIMARY KEY,
 	name VARCHAR(100) NOT NULL,
-	weight DECIMAL(2) NOT NULL,
-	volume DECIMAL(2) NOT NULL,
+	weight DECIMAL(6,3) NOT NULL,
+	volume DECIMAL(6,3) NOT NULL,
 	quantity INTEGER NOT NULL,
 	packaging VARCHAR(20),
 	src_nation VARCHAR(50),
