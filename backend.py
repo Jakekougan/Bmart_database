@@ -1,40 +1,37 @@
 import mysql.connector
 from mysql.connector import errorcode
 
-def main():
+
+def get_connection() -> mysql.connector.connection:
+    """ A helper function to connect to the database. This lets you put the connection code in ONE place, rather than
+    scattered throughout your program.
+
+    :return: A connection to our SQL server, that should hopefully be open, but who knows, double-check on use!
+    """
+    # Try to open the SQL connection...
     try:
-        with mysql.connector.connect(user="afhj",
-                                     password="Titans25",
-                                     host="cs314.iwu.edu",
-                                     database='afhj') as cnx:
-            try:
-                with cnx.cursor() as cursor:
-                    pass
-            except mysql.connector.Error as err:
-                print("Error while executing", cursor.statement, '--'. str(err))
-                cnx.rollback()
-
-            except mysql.connector.Error as err:
-                if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-                    print("Somethinhg is wrong with your username or password")
-
-                elif err.errno == errorcode.ER_BAD_DB_ERROR:
-                    print("Database does not exist")
-                else:
-                    print(err)
-
-            print(cnx is None or not cnx.is_connected())
-
+        cnx =  mysql.connector.connect(user='afhj', password='Titan25', host='cs314.iwu.edu', database='afhj')
+    # Connection errors handled here, with explicit handling for different types of errors.
     except mysql.connector.Error as err:
-        if err.errno == errorcode.CR_CONNECTION_ERROR:
-            print("Could not connect to Database!")
+
+        # Basically just intercepting the MySQL error message and replacing it with something more user friendly.
+        # In this model, we still want this to error out, so that the entire program halts (or someone can catch it).
+        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+            raise mysql.connector.Error("Something is wrong with your user name or password")
+        elif err.errno == errorcode.ER_BAD_DB_ERROR:
+            raise mysql.connector.Error("Database does not exist")
+        else:
+            raise mysql.connector.Error(err)
+
+    return cnx
+
+
 
 
 def reorder(store):
     """
     Executes a reorder requests for Bmart
     """
-
     #Check Database for needed products
 
     #Checks previous reorder requests and shipments to make sure we haven't already ordered needed items
@@ -46,7 +43,7 @@ def reorder(store):
     #Store redorder in Database
 
     """
-    Retuns should include 
+    Retuns should include
 
     A list of the products reordered and the quantities for each
     A list of how many reorders requests were placed with each vendor
@@ -62,7 +59,7 @@ def vendor_shipment(store, deliverydate, reorders, shipmentitems):
     #Indicates which reorder requests are being fuffilled
 
     #Indicates the expected arrival date
-    
+
     #Indicates how much of each item is being shipped
 
     #Store all info in database
@@ -121,6 +118,5 @@ def online_order(store, customer, order_items):
 
 
 if __name__ == "__main__":
-    main()
+    get_connection()
     print("Success!")
-    print("Need to create a database!")
