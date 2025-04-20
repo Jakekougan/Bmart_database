@@ -1,0 +1,41 @@
+| Naperville           | IL               | 60540        | 123 Maple Lane                       | 630-233-1234     |
+| Iowa City            | IA               | 52240        | 456 Oak Avenue                       | 319-555-5678     |
+| Decatur              | IL               | 62522        | 789 Pine Street                      | 217-344-9012     |
+| Los Angeles          | CA               | 90001        | 101 Hollywood Blvd                   | 323-556-3456     |
+| Los Angeles          | CA               | 90017        | 202 Sunset Drive                     | 213-575-7890     |
+| Miami                | FL               | 33130        | 303 Ocean Breeze Lane                | 305-545-2345     |
+| Philadelphia         | PA               | 19107        | 404 Liberty Square                   | 215-235-6789     |
+| Boston               | MA               | 02108        | 505 Beacon Hill Rd                   | 617-111-4321     |
+| Gotham City          | NJ               | 08001        | 606 Wayne Manor Drive                | 856-345-8765     |
+| Bloomington          | IL               | 61701        | 707 Constitution Avenue              | 309-555-5432     |
+| Peoria               | IL               | 61604        | 808 Riverwalk Street                 | 309-543-1122     |
+| Phoenix              | AZ               | 85004        | 909 Desert Ridge Lane                | 602-532-3344     |
+| Washington           | DC               | 20002        | 101 Capitol Hill Rd                  | 202-555-5566     |
+| Houston              | TX               | 77002        | 202 Lone Star Way                    | 713-543-7788     |
+| Aurora               | IL               | 60504        | 303 Fox Valley Blvd                  | 630-335-9900     |
+| Orlando              | FL               | 32789        | 404 Magic Kingdom Ln                 | 407-523-2233     |
+| San Diego            | CA               | 92101        | 505 Sunshine Ave                     | 619-444-4455     |
+| Minneapolis          | MN               | 55402        | 606 Twin Cities Way                  | 612-555-6677     |
+| Malibu               | CA               | 90263        | 707 Pacific Coast Highway            | 310-666-8899     |
+| Brooklyn             | NY               | 11201        | 808 Bridge Street                    | 718-777-9901     |
+| Peoria               | IL               | 61602        | 909 Downtown Loop                    | 309-888-3342     |
+| LeRoy                | IL               | 61752        | 101 Prairie View Rd                  | 309-999-5564     |
+| Springfield          | IL               | 62704        | 202 Lincoln Avenue                   | 217-101-7786     |
+| Seattle              | WA               | 98101        | 303 Emerald City Blvd                | 206-100-9908     |
+| Seattle              | WA               | 98039        | 404 Rainier Way                      | 206-102-2235     |
+| Fairbanks            | AK               | 99703        | 505 Northern Lights Drive            | 907-103-4457     |
+| Champaign            | IL               | 61820        | 606 University Blvd                  | 217-104-6679     |
+| Frankfort            | IL               | 60423        | 707 Prairie Crossing Road            | 815-105-8892     |
+| Rockford             | IL               | 61101        | 808 Riverstone Lane                  | 779-100-1124     |
+| Denver               | CO               | 80202        | 909 Mile High Blvd                   | 303-112-3346     |
+| Denver               | CO               | 80203        | 101 Rockies Avenue                   | 720-344-5562     |
+| Chicago              | IL               | 60616        | 202 Windy City Way                   | 312-777-7784     |
+| Atlanta              | GA               | 30303        | 303 Peachtree Street                 | 404-766-9907     |
+| Chicago              | IL               | 60614        | 404 Lakefront Lane                   | 773-444-2237     |
+| Little Rock          | AR               | 72201        | 505 Capitol View Blvd                | 501-332-4459     |
+| Minneapolis          | MN               | 55401        | 606 Mississippi Drive                | 612-346-6671     |
+| Queens               | NY               | 07831        | 707 Borough Street                   | 718-765-8890     |
+| St. Louis            | MO               | 63101        | 808 Gateway Arch Rd                  | 314-998-1128     |
+| Normal               | IL               | 61761        | 909 Uptown Circle                    | 309-121-3340     |
+
+
