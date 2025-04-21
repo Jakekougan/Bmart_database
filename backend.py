@@ -75,12 +75,36 @@ def vendor_shipment(store, deliverydate, reorders, shipmentitems):
 
     pass
 
+# Hayden has dibs
 def stock(store, shipment, shipment_items):
     """
     Documentation here
     """
 
     #Stock processes when there are new shipment and the date of restock.
+
+    cnx = get_connection()
+    with cnx.cursor() as crs:
+
+        try:
+
+            try:
+                shipment_info = crs.execute('SELECT * FROM afhj.shipment WHERE store = %s AND shipment_no = %s', (store, shipment)).fetchone()
+                shiptment_items = crs.execute('SELECT * FROM afhj.shipment_items WHERE shipement_no = %s', (shipment))
+                    
+            except mysql.connector.Error as err:
+
+                print("Error fetching Shipment Dad from Databse", cnx.statement, str(err))
+            
+        except:
+
+            print("Stock Function did not Execute correctly", cnx.statement, str(err))
+        
+
+
+
+
+    cnx.close()
 
     """
     Returns should include
