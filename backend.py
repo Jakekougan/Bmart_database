@@ -108,7 +108,7 @@ def stock(store, shipment, shipment_items):
                 ordered_items = crs.execute("SELECT product, Product_qty FROM afhj.reorder_requests WHERE Store = %s", (store)).fetchone()
 
                 #Retrives the Items Shipped 
-                arrived_items = crs.execute("SELECT product, Product_qty FROM afhj.shipment RIGHT JOIN afhj.shipment_items ON shipment_no = Shipment_no RIGHT JOIN reorder_request ON Reorder_id = request_id WHERE afhj.shipment.shipment_no = %s").fetchone()
+                arrived_items = shipment_items
                 
                 #Compares to see if Order is correct 
                 if (ordered_items[0] == arrived_items[0] & ordered_items[1] == arrived_items[1]):
@@ -131,10 +131,10 @@ def stock(store, shipment, shipment_items):
 
                 #Gets quantities and Products regarding the new stock
                 newInventory= crs.execute("SELECT product, Product_qty FROM afhj.shipment RIGHT JOIN afhj.shipment_items ON shipment_no = Shipment_no RIGHT JOIN reorder_request ON Reorder_id = request_id WHERE afhj.shipment.shipment_no = %s").fetchone()
-                newAmount = newInventory[1]
+                amountToAdd = newInventory[1]
                 product = newInventory[0]
 
-                crs.execute("UPDATE afhj.inventory SET curr_amount = curr_amount + %s WHERE store = %s AND product_num = %s", (newAmount ,store, product))
+                crs.execute("UPDATE afhj.inventory SET curr_amount = curr_amount + %s WHERE store = %s AND product_num = %s", (amountToAdd ,store, product))
 
             except mysql.connector.Error as err:  
 
