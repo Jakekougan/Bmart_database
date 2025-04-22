@@ -1,5 +1,6 @@
 import mysql.connector
 from mysql.connector import errorcode
+from datetime import datetime
 
 
 def get_connection() -> mysql.connector.connection:
@@ -49,7 +50,59 @@ def reorder(store):
     A list of how many reorders requests were placed with each vendor
     The total price of the reorders, based upon the current price agreed upon between BMart and the vendor.
     """
-    pass
+    cnx = get_connection()
+    with cnx.cursor() as crs:
+        try:
+            # First, get the amount of products that need to be ordered according to the inventory.
+            crs.execute('SELECT product_num, (max_amt-curr_amt) FROM store JOIN inventory ON store_num=%s', (store,))
+            reorder_information = crs.fetchall()
+
+            # Next, check for any shipments that have not yet been delivered to the store.
+            crs.execute('SELECT product, Product_qty FROM reorder_requests JOIN shipment ON shipment.request=reorder_requests.request_id WHERE shipment.delivered=false AND shipment.store=%s', (store,))
+            pending_shipment = crs.fetchall()
+
+            # Finally, check for any reorder requests that aren't currently linked to a shipment.
+            crs.execute('SELECT r.product, r.Product_qty FROM reorder_requests r LEFT JOIN shipment s ON r.request_id = s.request WHERE s.request IS NULL AND r.store=%s', (store,))
+            pending_reorder = crs.fetchall()
+            
+            # Convert all 3 of the lists that we have pulled to dictionaries.
+            # Then use a for loop to subtract the amount of product from pending shipments/reorders from our current "needed" stock.
+            # This will prevent ordering products that are already in a pending order.
+            reorder_dictionary = dict(reorder_information)
+            shipment_dictionary = dict(pending_shipment)
+            pending_reorder_dictionary = dict(pending_reorder)
+            final_reorders = {}
+
+            for product_num, quantity in reorder_dictionary.items():
+                pending_quantity = shipment_dictionary.get(product_num, 0) + pending_reorder_dictionary.get(product_num, 0)
+                final_quantity = quantity - pending_quantity
+
+                if final_quantity > 0:
+                    final_reorders[product_num] = final_quantity
+            
+            # Once we have the final quantities stored in the final_reorders dict, convert to a list so we can create reorder requests for each product.
+            final_reorder_list = list(final_reorders.items())
+            
+            # Use a for loop to insert a reorder request into the database for every product that needs to be ordered.
+            for product_num, quantity in final_reorder_list:
+
+                # First, we need to get the unit price(vendor price) from a given vendor so we can calculate cost.
+                crs.execute('SELECT unit_price FROM bmart_products WHERE upc=%s', (product_num,))
+                price_per_unit = crs.fetchone()
+                print(type(price_per_unit))
+                cost = quantity * price_per_unit
+                
+
+                # Next, we need to use the product_num(UPC) to get the corresponding vendor for the reorder request.
+                crs.execute('')
+                
+                
+
+                crs.execute('INSERT INTO reorder_requests (order_date, product, Product_qty, store, cost, viewed) VALUES (CURRENT_TIMESTAMP, %s, %s, %s, %s, FALSE );')
+        except mysql.connector.Error as err:
+            print("Error fetching reorder information", str(err))
+
+    cnx.close()
 
 def vendor_shipment(store, deliverydate, reorders, shipmentitems):
     """
@@ -75,10 +128,13 @@ def vendor_shipment(store, deliverydate, reorders, shipmentitems):
 
     pass
 
-# Hayden has dibs
 def stock(store, shipment, shipment_items):
     """
-    Documentation here
+    Author: Hayden Warfield 
+
+    This marks the Date and Time at which a shipment has arrived.
+    The function then checks the content of the recieved shipment to see if the shipment contains what was ordered.
+    Then it takes the checked items and adds the items into the Inventory the store shipped too.
     """
 
     #Stock processes when there are new shipment and the date of restock.
@@ -88,22 +144,61 @@ def stock(store, shipment, shipment_items):
 
         try:
 
+            #Updates database to indicate that an order arrived and when arrived where
             try:
-                shipment_info = crs.execute('SELECT * FROM afhj.shipment WHERE store = %s AND shipment_no = %s', (store, shipment)).fetchone()
-                shiptment_items = crs.execute('SELECT * FROM afhj.shipment_items WHERE shipement_no = %s', (shipment))
+                current_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                crs.execute("UPDATE afhj.shipment SET actual_arrival = %s WHERE shipment_no = %s and store = %s", (current_timestamp, shipment, store))
+                print('Shipment #' + shipment + " arrived at Store #" + store + "at " + current_timestamp)
+            
+            except mysql.connector.Error as err:
+
+                print("Shipment Arrival could not be Documented in Database", cnx.statement, str(err))
+
+            #Gets the details of the original reorder request to Match sure the sipment contains the desired product and amount
+            try:
+                #Retrives the items ordered
+                ordered_items = crs.execute("SELECT product, Product_qty FROM afhj.reorder_requests WHERE Store = %s", (store)).fetchone()
+
+                #Retrives the Items Shipped 
+                arrived_items = shipment_items
+                
+                #Compares to see if Order is correct 
+                if (ordered_items[0] == arrived_items[0] & ordered_items[1] == arrived_items[1]):
+
+                    crs.execute("UPDATE afhj.shipment SET delivered = 1 WHERE shipment = %s AND store = %s" , (shipment, store))
+
+                    print("Contained:" + ordered_items[1] + " " + ordered_items[0])
+                    print("order contains correct Contents")
+
+                else:
+                    
+                    print("The correct items were not Shipped! SILLY VENDORS!")
+                
                     
             except mysql.connector.Error as err:
 
-                print("Error fetching Shipment Dad from Databse", cnx.statement, str(err))
-            
+                print("Error fetching Shipment Data from Databse", cnx.statement, str(err))
+
+            try:
+
+                #Gets quantities and Products regarding the new stock
+                newInventory= crs.execute("SELECT product, Product_qty FROM afhj.shipment RIGHT JOIN afhj.shipment_items ON shipment_no = Shipment_no RIGHT JOIN reorder_request ON Reorder_id = request_id WHERE afhj.shipment.shipment_no = %s").fetchone()
+                amountToAdd = newInventory[1]
+                product = newInventory[0]
+
+                crs.execute("UPDATE afhj.inventory SET curr_amount = curr_amount + %s WHERE store = %s AND product_num = %s", (amountToAdd ,store, product))
+
+            except mysql.connector.Error as err:  
+
+                print("Error adding new Inventory to the Database", cnx.statement, str(err))
+
+            crs.commit()
+        
         except:
 
             print("Stock Function did not Execute correctly", cnx.statement, str(err))
         
-
-
-
-
+  
     cnx.close()
 
     """
@@ -115,7 +210,7 @@ def stock(store, shipment, shipment_items):
     A list of any inventory discrepancies between the shipment promised by the vendor and the shipment received by the store
 
     """
-    pass
+
 
 def online_order(store, customer, order_items):
     """

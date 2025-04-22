@@ -12,11 +12,17 @@ CREATE TABLE bmart_products (
 	quantity INTEGER NOT NULL,
 	packaging VARCHAR(20),
 	src_nation VARCHAR(50),
-	hq_price DECIMAL NOT NULL,
-    unit_price decimal NOT NULL,
-	brand_name VARCHAR(30) NOT NULL,
-    type varchar(30),
-FOREIGN KEY (type) REFERENCES types(type_name)
+	hq_price DECIMAL(10, 2) NOT NULL,
+    unit_price DECIMAL(10, 2) NOT NULL,
+	brand_name VARCHAR(30),
+	FOREIGN KEY (brand_name) REFERENCES brands(brand_name)
+);
+
+DROP TABLE IF EXISTS brands;
+CREATE TABLE brands (
+	brand_name VARCHAR(30) PRIMARY KEY,
+	vendor_name VARCHAR(64) NOT NULL,
+	FOREIGN KEY (vendor_name) REFERENCES vendor(name)
 );
 
 DROP TABLE IF EXISTS store;
@@ -32,9 +38,10 @@ CREATE TABLE store (
 
 DROP TABLE IF EXISTS hrs_operating;
 CREATE TABLE hrs_operating (
-	store INT PRIMARY KEY,
+	store INT,
 	FOREIGN KEY (store) REFERENCES store(store_num),
 	day_of_week TINYINT NOT NULL CHECK (day_of_week BETWEEN 1 AND 7),
+	PRIMARY KEY (store, day_of_week),
 	opening_time TIME NOT NULL,
 	closing_time TIME NOT NULL
 );
@@ -42,7 +49,6 @@ CREATE TABLE hrs_operating (
 DROP TABLE IF EXISTS vendor;
 CREATE TABLE vendor (
 	name VARCHAR(64)PRIMARY KEY
-    
 );
 
 DROP TABLE IF EXISTS reorder_requests;
@@ -57,7 +63,9 @@ CREATE TABLE reorder_requests(
 	cost	DECIMAL NOT NULL,
 	viewed BOOLEAN NOT NULL,
     vendor VARCHAR(64),
-    FOREIGN KEY (vendor) REFERENCES vendors(vendor)
+    FOREIGN KEY (vendor) REFERENCES vendor(name),
+	shipment_no INT,
+	FOREIGN KEY (shipment_no) REFERENCES shipment(shipment_no)
     );
 
 DROP TABLE IF EXISTS customers;
@@ -86,9 +94,10 @@ CREATE TABLE purchases(
 
 DROP TABLE IF EXISTS order_items;
 CREATE TABLE order_items (
-	order_id INT PRIMARY KEY, 
+	order_id INT, 
 	product CHAR(12),
 	quantity INT,
+	PRIMARY KEY (order_id, product),
 	FOREIGN KEY (order_id) REFERENCES purchases(purchase_id),
 	FOREIGN KEY (product) REFERENCES bmart_products(upc)
 );
@@ -101,18 +110,8 @@ CREATE TABLE shipment (
 	delivered BOOLEAN NOT NULL,
     	store INT,
     	vendor VARCHAR(64),
-    	request INT,
-    	product_num CHAR(12),
 	FOREIGN KEY (store) REFERENCES store(store_num),
 	FOREIGN KEY (vendor) REFERENCES vendor(name),
-	FOREIGN KEY (request) REFERENCES reorder_requests(request_id),
-	FOREIGN KEY (product_num) REFERENCES bmart_products(upc)
-);
-
-DROP TABLE IF EXISTS shipment_items;
-CREATE TABLE shipment_items (
-	Shipment_no INT PRIMARY KEY,
-	Reorder_id INT NOT NULL
 );
 	
 DROP TABLE IF EXISTS inventory;
@@ -130,8 +129,9 @@ CREATE TABLE inventory (
 
 DROP TABLE IF EXISTS product_types;
 CREATE TABLE product_types (
-	product CHAR(12) PRIMARY KEY,
+	product CHAR(12),
 	type VARCHAR(30),
+	PRIMARY KEY (product, type),
 	FOREIGN KEY (product) REFERENCES bmart_products(upc),
 	FOREIGN KEY (type) REFERENCES types(type_name)
 );
