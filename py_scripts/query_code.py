@@ -1,9 +1,8 @@
-import backend
+import mysql.connector
+from mysql.connector import errorcode
 from file_read import new_data
+from backend import get_connection
 
-cnx = backend.get_connection()
-
-loc_info = {}
 
 
 def make_inventory(cnx):
@@ -19,7 +18,7 @@ def make_inventory(cnx):
             for d in data:
                 print(d)
 
-    except backend.mysql.connector.Error as err:
+    except mysql.connector.Error as err:
         print("Error while executing", cursor.statement, '--', str(err))
         cnx.rollback()
 
@@ -45,13 +44,57 @@ def stores(cnx):
 
 
 
-    except backend.mysql.connector.Error as err:
+    except mysql.connector.Error as err:
         print("Error while executing", cursor.statement, '--', str(err))
         cnx.rollback()
 
     finally:
         cnx.close()
 
-stores(cnx)
+
+def get_all_reorders():
+    cnx = get_connection()
+    try:
+        with cnx.cursor() as cursor:
+            query = f"SELECT * from reorder_requests JOIN bmart_products ON reorder_requests.product = bmart_products.upc"
+            cursor.execute(query)
+            data = cursor.fetchall()
+            reorder_requests = []
+            for d in data:
+                reorder_requests.append(d[0])
+            return reorder_requests
+
+    except mysql.connector.Error as err:
+        print("Error while executing", cursor.statement, '--', str(err))
+        cnx.rollback()
+
+    finally:
+        cnx.close()
+
+def get_items_from_reorder():
+    cnx = get_connection()
+    reorder_data = {}
+    reorders = get_all_reorders()
+    try:
+        with cnx.cursor() as cursor:
+            for reorder in reorders:
+                query = f"SELECT product, Product_qty from reorder_requests WHERE request_id = {reorder}"
+                cursor.execute(query)
+                data = cursor.fetchall()
+                reorder_data[data[0][0]] = data[0][1]
+            return reorder_data
+
+
+
+    except mysql.connector.Error as err:
+        print("Error while executing", cursor.statement, '--', str(err))
+        cnx.rollback()
+
+
+    finally:
+        cnx.close()
+
+
+
 
 
