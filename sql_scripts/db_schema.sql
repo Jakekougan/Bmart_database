@@ -13,6 +13,7 @@ CREATE TABLE bmart_products (
 	packaging VARCHAR(20),
 	src_nation VARCHAR(50),
 	hq_price DECIMAL NOT NULL,
+    unit_price decimal NOT NULL,
 	brand_name VARCHAR(30) NOT NULL,
     type varchar(30),
 FOREIGN KEY (type) REFERENCES types(type_name)
@@ -54,8 +55,10 @@ CREATE TABLE reorder_requests(
 	store INT NOT NULL,
 	FOREIGN KEY (store) REFERENCES store(store_num),
 	cost	DECIMAL NOT NULL,
-	viewed BOOLEAN NOT NULL
-);
+	viewed BOOLEAN NOT NULL,
+    vendor VARCHAR(64),
+    FOREIGN KEY (vendor) REFERENCES vendors(vendor)
+    );
 
 DROP TABLE IF EXISTS customers;
 CREATE TABLE customers(
