@@ -1,7 +1,8 @@
 import backend
 import mysql.connector
 from mysql.connector import errorcode
-from query_code import get_items_from_reorder
+import query_code as q
+import datetime
 
 loc_info = {}
 
@@ -14,7 +15,7 @@ def vendor_shipment(store, deliverydate, reorders, shipmentitems):
 
     Parameters:
         store (String): the store number representing a particular Bmart store
-        deliverydate (str): the date of the reorder request
+        deliverydate (str): the estimated delivery date
         reorders (list): a list containing the redorder number from a store
         shipmentitems (dict): a dictionary containing a mapping of items to quantity
 
@@ -30,27 +31,72 @@ def vendor_shipment(store, deliverydate, reorders, shipmentitems):
 
     #Store all info in database
 
-    """
-    Returns should include
-
-    <store> and <delivery_date> should presumably align with how your database identifies stores and delivery dates, as previously described.
-    For <reorders>, the most reasonable ways for it to be specified would likely be either a string that follows some very precise formatting rules or a tuple / list of reorders, each specified in a type that corresponds with how the reorders are identified in the database.
-    For <shipment_items>, there are several possible ways for the vendor to specify this information via a parameter; in particular, either a string that follows some very precise formatting rules or a dictionary mapping items to the quantity for each item in that shipment
-
-    """
     c = backend.get_connection()
     try:
         with c.cursor() as cursor:
-            for reorder in reorders:
-                query = f"SELECT * from reorder_requests WHERE request_id = {reorder}"
-                cursor.execute(query)
+            vendors = set()
+            for item in shipmentitems:
+                query = "SELECT * from reorder_requests WHERE product = %s AND store = %s;"
+                cursor.execute(query, (item ,store))
                 data = cursor.fetchall()
-                print(data)
-                query2 = f"UPDATE reorder_requests SET viewed = {1} WHERE request_id = {reorder} "
+                if data:
+                    vendors.add(data[0][7])
+                    if item in data[0] and data[0][3] <= shipmentitems.get(data[0][2]) and len(vendors) == 1:
+                        q = "INSERT INTO shipment (estimated_delivery, delivered, store, vendor)" \
+                        "VALUES (%s, 0, %s, %s)"
+                        cursor.execute(q, (deliverydate, store, data[0][7]))
 
-                ship_q = "INSERT INTO shipment (`estimated_delivery`, `delivered`, `store`, `vendor`, `request`, `product_num`)" \
-                f"VALUES ({deliverydate}, 0, {store}, {data[0][-1]}, {reorder}, {data[0][2]});"
-                cursor.execute(ship_q)
+
+                        cursor.execute("SELECT shipment_no FROM shipment ORDER BY shipment_no DESC LIMIT 1")
+                        num = cursor.fetchone()[0]
+
+
+                        u = "UPDATE reorder_requests SET viewed = 1, shipment_no = %s WHERE request_id = %s;"
+                        cursor.execute(u, (num, data[0][0]))
+                    else:
+                        c.rollback()
+                        if data[0][3] > shipmentitems.get(data[0][2]):
+                            print(f"ERROR! Insufficient Stock to satisfy reorder request on item {data[0][2]}!")
+                            return None
+                        else:
+                            print(f"ERROR! Invalid item: {data[0][2]}!")
+                            return None
+            c.commit()
+
+
+
+            #print A manifest of the shipment (or shipping manifest)
+            manifest ='SELECT shipment.vendor, bmart_products.upc, bmart_products.name, store.address, store.city, store.state, store.zip_code, bmart_products.weight, bmart_products.volume FROM shipment ' \
+            'JOIN reorder_requests ON shipment.shipment_no = reorder_requests.shipment_no ' \
+            'JOIN bmart_products ON bmart_products.upc = reorder_requests.product ' \
+            'JOIN store ON shipment.store = store.store_num ' \
+            'WHERE reorder_requests.viewed = 1 AND reorder_requests.store = %s;'
+
+            cursor.execute(manifest, (store,))
+            data = cursor.fetchall()
+            print(data)
+
+
+            #print A list of the fulfilled reorder requests
+            fufilled = "SELECT request_id FROM reorder_requests WHERE store = %s AND viewed = 1;"
+            #cursor.execute(fufilled, (store,))
+            data = cursor.fetchall()
+            #print(data)
+
+            #print How many reorder requests from this store the vendor still has outstanding
+            outstanding = "SELECT request_id FROM reorder_requests WHERE store = %s AND viewed = 0 AND vendor = %s;"
+            #cursor.execute(outstanding, (store,))
+            #data = cursor.fetchall()
+            #print(data)
+
+
+            #print How many total reorder requests from BMart the vendor still has outstanding
+            outstanding2 = "SELECT request_id FROM reorder_requests WHERE vendor = %s AND viewed = 0;"
+            #cursor.execute(outstanding2, (store,))
+            #data = cursor.fetchall()
+            #print(data)
+
+
 
 
 
@@ -68,8 +114,12 @@ def vendor_shipment(store, deliverydate, reorders, shipmentitems):
 
 
 def main():
-    shipment_items = get_items_from_reorder()
-    vendor_shipment(1, "05/17/25", [29,30,31,32,33,34], shipment_items)
+    date = datetime.datetime(2025, 5, 15 , 2, 20)
+    reorders = [72, 77]
+    print(reorders)
+    shipment_items = q.get_items_from_reorder(reorders)
+    print(shipment_items)
+    vendor_shipment(1, date, reorders, shipment_items)
 
 if __name__ == "__main__":
     main()
