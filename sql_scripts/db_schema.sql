@@ -51,6 +51,17 @@ CREATE TABLE hrs_operating (
 	closing_time TIME NOT NULL
 );
 
+DROP TABLE IF EXISTS shipment;
+CREATE TABLE shipment (
+	shipment_no INT AUTO_INCREMENT PRIMARY KEY,
+	estimated_delivery TIMESTAMP NOT NULL,
+	actual_arrival TIMESTAMP NOT NULL,
+	delivered BOOLEAN NOT NULL,
+    	store INT,
+    	vendor VARCHAR(64),
+	FOREIGN KEY (store) REFERENCES store(store_num),
+	FOREIGN KEY (vendor) REFERENCES vendor(name)
+);
 
 DROP TABLE IF EXISTS reorder_requests;
 CREATE TABLE reorder_requests(
@@ -69,17 +80,6 @@ CREATE TABLE reorder_requests(
 	FOREIGN KEY (shipment_no) REFERENCES shipment(shipment_no)
     );
     
-DROP TABLE IF EXISTS shipment;
-CREATE TABLE shipment (
-	shipment_no INT AUTO_INCREMENT PRIMARY KEY,
-	estimated_delivery TIMESTAMP NOT NULL,
-	actual_arrival TIMESTAMP NOT NULL,
-	delivered BOOLEAN NOT NULL,
-    	store INT,
-    	vendor VARCHAR(64),
-	FOREIGN KEY (store) REFERENCES store(store_num),
-	FOREIGN KEY (vendor) REFERENCES vendor(name)
-);
 
 DROP TABLE IF EXISTS customers;
 CREATE TABLE customers(
