@@ -213,6 +213,7 @@ def stock(store, shipment, shipment_items):
 
 
 def online_order(store, customer, order_items):
+
     """
     Document here
     """
@@ -233,7 +234,131 @@ def online_order(store, customer, order_items):
     The total price for that order, based on the current store price for each of those items.
 
     """
-    pass
+    cnx = get_connection()
+
+    if cnx is None or not cnx.is_connected():
+        raise ValueError("Failed to connect to the database")
+    
+    try:
+        with cnx.cursor() as cursor:
+        
+            valid_customer_query = "SELECT * from customer where customer_id = %s;" 
+        
+            cursor.execute(valid_customer_query, (customer,)) # Using the 1 element tuple method
+            customer_info = cursor.fetchone() # Gets the first customer that matches the customer_id since they are unique.
+
+        #Checking if the customer is valid. If not valid we display an error message
+            if customer_info is None:
+                print(f"Urghhh {customer_info} is invalid try again!!!")
+                return
+        
+        
+            #Query to get the inventory of a specific store specificially the product and the amount of that product
+            inventory_query = "SELECT product_num, curr_amt from inventory where store = %s;"
+            cursor.execute(inventory_query, (store,))
+            store_inventory = cursor.fetchall() #If we choose store 1, we get all the products of this store with their respective quantities.
+
+
+            inventory_dictionary = {}
+            #Creating a dictionary for efficient lookups. The key would be the product number and the value would be the product quantity.
+            for product in store_inventory:
+                product_num = product[0] 
+                curr_amt = product[1]
+                inventory_dictionary[product_num] = curr_amt
+
+
+            order_error = [] # Creating a list to hold keep track of items that cuase error.
+            order_total_price = 0
+
+                #Getting the specific quantity and product number for the items in upcoming order
+            for product in order_items: 
+                product_num = product[0]
+                product_quantity = product[1]
+
+                available_inventory = inventory_dictionary[product_num] # check if this is actually getting the thing
+                    
+                #If there is not enough inventory we display an error of the items there was not enough inventory for
+                if available_inventory < product_quantity:
+                    order_error.append(product_num)
+                    print(f"Urghh not enough store inventory for {product_num}. Ordered: {product_quantity}, Inventory: {available_inventory}. Checking nearby stores")
+
+                else: # If there is enough inventory we compute query to find the price of each product in order
+                    order_total_price_query = "SELECT local_price FROM inventory WHERE product_num = %s AND store = %s"
+                    cursor.execute(order_total_price_query, (product_num, store))
+                    product_price = cursor.fetchone()
+                    total_product_cost = product_price[0] * product_quantity # Multiply the price of the product with the quanity ordered
+                    order_total_price += total_product_cost # Now we add all of the individual product cost to compute entire order cost 
+                        
+
+            if order_error:
+                order_error_items = "" # Empty string to be able to add all failed items to print statement 
+
+                for item in order_error: # We loop through all the items that caus error and print them out 
+                    order_error_items = order_error_items + item + ","
+                    
+                print(f"urghh!your current store does not have enoguh stock for the following products: {order_error_items} ")
+                print("Checking other stores in your state with enough stock for your order")
+
+                inventory_check = True
+                
+                for product in order_items:
+                    product_num = product[0]
+                    product_quantity = product[1]
+
+                    #Query to find other state store in the area that can fuilffill the entire order
+                    other_stores_query = " SELECT store_num, sum(curr_amt) FROM inventory JOIN store on inventory.store = store.store_num" \
+                    "AND product_num = %s GROUP BY store_num HAVING curr_amt >= %s"
+
+                    cursor.execute(other_stores_query, (product_num, product_quantity))
+                    state_store = cursor.fetchall()
+
+                    if not state_store:
+                        inventory_check = False
+                        break
+
+                if inventory_check:
+                    print("Guess what! Your store couldnt fulfill the order but these stores in yoru state can")
+                else: 
+                    print("Sorry buddy no stores in your state can fulffill your entire order")
+                    return
+
+
+                #If the order can be placed then we reflect this on database as a purchase
+                order_placed_query = """INSERT into purchases (purchase_date, price, online_order, is_delivered, customer") 
+                VALUES (%s,%s, TRUE, FALSE, %s)"""
+                
+                cursor.execute(order_placed_query, (order_total_price, customer))
+                
+
+
+                for product in order_items:
+                    product_num = product[0]
+                    product_quantity = product[1]
+                    #Calculating the new quanitty availble in the stor eafetr the order
+                    updated_quantity = available_inventory - product_quantity
+                    quanity_query = "UPDATE inventory SET curr_amt = %s where store = %s  AND product_num = %s"
+                    cursor.execute( quanity_query, (updated_quantity, store, product_num))
+
+                    cnx.commit()
+                    print("order succesful total price:")
+                    print(f"customer info: {customer_info}")
+                    print("ordered items:")
+                    for product in order_items:
+                        print(f"Products; {product [0]}, Quantity: {product[1]}")
+
+    
+    
+    except mysql.connector.Error as err:
+        print(f"Error: {str(err)}")
+        cnx.rollback()
+    finally:
+        cnx.close()
+        
+    
+
+  
+
+
 
 
 if __name__ == "__main__":
