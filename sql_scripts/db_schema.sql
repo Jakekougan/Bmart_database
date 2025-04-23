@@ -106,18 +106,21 @@ CREATE TABLE purchases(
 );
 
 DROP TABLE IF EXISTS order_items;
-CREATE TABLE `order_items` (
+CREATE TABLE order_items (
   order_id int NOT NULL,
   product char(12) NOT NULL,
   quantity int DEFAULT NULL,
   inventory_id int NOT NULL,
+  purchase_id int NOT NULL,
   PRIMARY KEY (order_id, product),
   KEY product (product),
-  KEY order_items_ibfk_3` (inventory_id),
+  KEY order_items_ibfk_3 (inventory_id),
+  KEY order_items_ibfk_4 (purchase_id),
   CONSTRAINT order_items_ibfk_1 FOREIGN KEY (order_id) REFERENCES purchases (purchase_id),
   CONSTRAINT order_items_ibfk_2 FOREIGN KEY (product) REFERENCES bmart_products (upc),
-  CONSTRAINT order_items_ibfk_3 FOREIGN KEY (inventory_id) REFERENCES inventory (inventory_id)
-) ;
+  CONSTRAINT order_items_ibfk_3 FOREIGN KEY (inventory_id) REFERENCES inventory (inventory_id),
+  CONSTRAINT order_items_ibfk_4 FOREIGN KEY (purchase_id) REFERENCES purchases (purchase_id)
+);;
 
 DROP TABLE IF EXISTS inventory;
 CREATE TABLE inventory (
