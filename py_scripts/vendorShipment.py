@@ -62,6 +62,7 @@ def vendor_shipment(store, deliverydate, reorders, shipmentitems):
                             print(f"ERROR! Invalid item: {data[0][2]}!")
                             return None
             c.commit()
+            vendor = vendors.pop()
 
 
 
@@ -78,8 +79,8 @@ def vendor_shipment(store, deliverydate, reorders, shipmentitems):
 
 
             #print A list of the fulfilled reorder requests
-            fufilled = "SELECT request_id FROM reorder_requests WHERE store = %s AND viewed = 1;"
-            #cursor.execute(fufilled, (store,))
+            fufilled = "SELECT request_id FROM reorder_requests WHERE store = %s AND viewed = 1 AND vendor = %s;"
+            cursor.execute(fufilled, (store, vendor))
             data = cursor.fetchall()
             #print(data)
 
