@@ -132,9 +132,9 @@ def stock(store, shipment, shipment_items):
     """
     Author: Hayden Warfield 
 
-    This marks the Date and Time at which a shipment has arrived.
-    The function then checks the content of the recieved shipment to see if the shipment contains what was ordered.
-    Then it takes the checked items and adds the items into the Inventory the store shipped too.
+    Shipment Items should be a list of lists that contains. Inside each nested list should be the product's UPC at index 0 
+    and the product quanitity at index 1.
+    ex.[[123456789012, 6], [098765432109, 7], [019283746574, 8]]
     """
 
     #Stock processes when there are new shipment and the date of restock.
@@ -159,21 +159,20 @@ def stock(store, shipment, shipment_items):
                 #Retrives the items ordered
                 ordered_items = crs.execute("SELECT product, Product_qty FROM afhj.reorder_requests WHERE Store = %s", (store)).fetchone()
 
-                #Retrives the Items Shipped 
-                arrived_items = shipment_items
                 
-                #Compares to see if Order is correct 
-                if (ordered_items[0] == arrived_items[0] & ordered_items[1] == arrived_items[1]):
+                for item in shipment_items:
 
-                    crs.execute("UPDATE afhj.shipment SET delivered = 1 WHERE shipment = %s AND store = %s" , (shipment, store))
+                    #Compares to see if Order is correct 
+                    if (ordered_items[0] == item[0] & shipment_items[1] == item[1]):
 
-                    print("Contained:" + ordered_items[1] + " " + ordered_items[0])
-                    print("order contains correct Contents")
+                        crs.execute("UPDATE afhj.shipment SET delivered = 1 WHERE shipment = %s AND store = %s" , (shipment, store))
 
-                else:
+                        print("Contained:" + ordered_items[1] + " " + ordered_items[0])
+
+                    else:
+                        
+                        print("The correct items were not Shipped! SILLY VENDORS!")
                     
-                    print("The correct items were not Shipped! SILLY VENDORS!")
-                
                     
             except mysql.connector.Error as err:
 
@@ -181,14 +180,19 @@ def stock(store, shipment, shipment_items):
 
             try:
 
+                for item in shipment_items:
                 #Gets quantities and Products regarding the new stock
-                newInventory= crs.execute("SELECT product, Product_qty FROM afhj.shipment RIGHT JOIN afhj.shipment_items ON shipment_no = Shipment_no RIGHT JOIN reorder_request ON Reorder_id = request_id WHERE afhj.shipment.shipment_no = %s").fetchone()
-                amountToAdd = newInventory[1]
-                product = newInventory[0]
+        
+                    amountToAdd = item[1]
+                    product = item[0]
+                    crs.execute("UPDATE afhj.inventory SET curr_amount = curr_amount + %s WHERE store = %s AND product_num = %s", (amountToAdd ,store, product))
 
-                crs.execute("UPDATE afhj.inventory SET curr_amount = curr_amount + %s WHERE store = %s AND product_num = %s", (amountToAdd ,store, product))
+                    inventoryInfo = crs.execute("SELECT store, curr_amt, max_amt FROM iventory WHERE product_num = %s", (item[0])).fetchone()
+                    productName = crs.execute("SELECT name FROM bmart_products WHERE upc = %s", (item[3])).fetchone()
+                    
+                    print("Store #" + inventoryInfo[0] + " now has " + inventoryInfo[1] + "/" + inventoryInfo[2] + " " + productName[0])
 
-            except mysql.connector.Error as err:  
+            except mysql.connector.Error as err:
 
                 print("Error adding new Inventory to the Database", cnx.statement, str(err))
 
@@ -200,16 +204,6 @@ def stock(store, shipment, shipment_items):
         
   
     cnx.close()
-
-    """
-    Returns should include
-
-    Details about the shipment that was just received, as was provided by the vendor (i.e. what the shipment was supposed to contain)
-    Note: Depending on how you interpreted the relationship between reorders and shipments, this may mean different things to your project group than to others.
-    A list of the shipment items and their quantities that were just stocked, as was physically identified by the stocker (i.e. what the shipment actually contained)
-    A list of any inventory discrepancies between the shipment promised by the vendor and the shipment received by the store
-
-    """
 
 
 def online_order(store, customer, order_items):
@@ -270,7 +264,7 @@ def online_order(store, customer, order_items):
             order_error = [] # Creating a list to hold keep track of items that cuase error.
             order_total_price = 0
 
-                #Getting the specific quantity and product number for the items in upcoming order
+            #Getting the specific quantity and product number for the items in upcoming order
             for product in order_items: 
                 product_num = product[0]
                 product_quantity = product[1]
@@ -346,19 +340,11 @@ def online_order(store, customer, order_items):
                     for product in order_items:
                         print(f"Products; {product [0]}, Quantity: {product[1]}")
 
-    
-    
     except mysql.connector.Error as err:
         print(f"Error: {str(err)}")
         cnx.rollback()
     finally:
         cnx.close()
-        
-    
-
-  
-
-
 
 
 if __name__ == "__main__":
