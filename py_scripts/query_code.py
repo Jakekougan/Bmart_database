@@ -1,27 +1,8 @@
-import backend
+import mysql.connector
+from mysql.connector import errorcode
 from file_read import new_data
+from backend import get_connection
 
-cnx = backend.get_connection()
-
-loc_info = {}
-
-
-def make_inventory(cnx):
-    try:
-        with cnx.cursor() as cursor:
-            query = "SELECT `upc` FROM bmart_products"
-            cursor.execute(query)
-
-            print(cursor.statement)
-
-            data = cursor.fetchall()
-            print(type(data))
-            for d in data:
-                print(d)
-
-    except backend.mysql.connector.Error as err:
-        print("Error while executing", cursor.statement, '--', str(err))
-        cnx.rollback()
 
 def stores(cnx):
     """For continuities sake, in most cases, it does not make sense to have customers live in a town where there is not a BMart store
@@ -45,13 +26,85 @@ def stores(cnx):
 
 
 
-    except backend.mysql.connector.Error as err:
+    except mysql.connector.Error as err:
         print("Error while executing", cursor.statement, '--', str(err))
         cnx.rollback()
 
     finally:
         cnx.close()
 
-stores(cnx)
+
+def get_all_reorders():
+    cnx = get_connection()
+    try:
+        with cnx.cursor() as cursor:
+            query = f"SELECT * from reorder_requests JOIN bmart_products ON reorder_requests.product = bmart_products.upc"
+            cursor.execute(query)
+            data = cursor.fetchall()
+            reorder_requests = []
+            for d in data:
+                reorder_requests.append(d[0])
+            return reorder_requests
+
+    except mysql.connector.Error as err:
+        print("Error while executing", cursor.statement, '--', str(err))
+        cnx.rollback()
+
+    finally:
+        cnx.close()
+
+def get_items_from_reorder(reorders):
+    cnx = get_connection()
+    reorder_data = {}
+    try:
+        with cnx.cursor() as cursor:
+            for reorder in reorders:
+                query = f"SELECT product, Product_qty from reorder_requests WHERE request_id = {reorder};"
+                cursor.execute(query)
+                data = cursor.fetchall()
+                reorder_data[data[0][0]] = data[0][1]
+            return reorder_data
+
+
+
+    except mysql.connector.Error as err:
+        print("Error while executing", cursor.statement, '--', str(err))
+        cnx.rollback()
+
+
+    finally:
+        cnx.close()
+
+def clear_table(table, pk):
+    cnx = get_connection()
+    try:
+        with cnx.cursor() as cursor:
+            query = f"SELECT * FROM {table};"
+            cursor.execute(query)
+            data = cursor.fetchall()
+            for d in data:
+                rm = f"DELETE FROM {table} WHERE {pk} = {d[0]};"
+                cursor.execute(rm)
+                cnx.commit()
+
+
+
+    except mysql.connector.Error as err:
+        print("Error while executing", cursor.statement, '--', str(err))
+        cnx.rollback()
+
+    finally:
+        cnx.close()
+
+
+
+
+
+
+#clear_table("shipment", "shipment_no")
+
+
+
+
 
 

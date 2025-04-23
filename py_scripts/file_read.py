@@ -1,4 +1,4 @@
-file = open("store_data.txt")
+file = open("py_scripts\store_data.txt")
 
 loc_data = []
 new_data = {}
