@@ -132,9 +132,9 @@ def stock(store, shipment, shipment_items):
     """
     Author: Hayden Warfield 
 
-    This marks the Date and Time at which a shipment has arrived.
-    The function then checks the content of the recieved shipment to see if the shipment contains what was ordered.
-    Then it takes the checked items and adds the items into the Inventory the store shipped too.
+    Shipment Items should be a list of lists that contains. Inside each nested list should be the product's UPC at index 0 
+    and the product quanitity at index 1.
+    ex.[[123456789012, 6], [098765432109, 7], [019283746574, 8]]
     """
 
     #Stock processes when there are new shipment and the date of restock.
@@ -159,21 +159,20 @@ def stock(store, shipment, shipment_items):
                 #Retrives the items ordered
                 ordered_items = crs.execute("SELECT product, Product_qty FROM afhj.reorder_requests WHERE Store = %s", (store)).fetchone()
 
-                #Retrives the Items Shipped 
-                arrived_items = shipment_items
                 
-                #Compares to see if Order is correct 
-                if (ordered_items[0] == arrived_items[0] & ordered_items[1] == arrived_items[1]):
+                for item in shipment_items:
 
-                    crs.execute("UPDATE afhj.shipment SET delivered = 1 WHERE shipment = %s AND store = %s" , (shipment, store))
+                    #Compares to see if Order is correct 
+                    if (ordered_items[0] == item[0] & shipment_items[1] == item[1]):
 
-                    print("Contained:" + ordered_items[1] + " " + ordered_items[0])
-                    print("order contains correct Contents")
+                        crs.execute("UPDATE afhj.shipment SET delivered = 1 WHERE shipment = %s AND store = %s" , (shipment, store))
 
-                else:
+                        print("Contained:" + ordered_items[1] + " " + ordered_items[0])
+
+                    else:
+                        
+                        print("The correct items were not Shipped! SILLY VENDORS!")
                     
-                    print("The correct items were not Shipped! SILLY VENDORS!")
-                
                     
             except mysql.connector.Error as err:
 
@@ -181,14 +180,19 @@ def stock(store, shipment, shipment_items):
 
             try:
 
+                for item in shipment_items:
                 #Gets quantities and Products regarding the new stock
-                newInventory= crs.execute("SELECT product, Product_qty FROM afhj.shipment RIGHT JOIN afhj.shipment_items ON shipment_no = Shipment_no RIGHT JOIN reorder_request ON Reorder_id = request_id WHERE afhj.shipment.shipment_no = %s").fetchone()
-                amountToAdd = newInventory[1]
-                product = newInventory[0]
+        
+                    amountToAdd = item[1]
+                    product = item[0]
+                    crs.execute("UPDATE afhj.inventory SET curr_amount = curr_amount + %s WHERE store = %s AND product_num = %s", (amountToAdd ,store, product))
 
-                crs.execute("UPDATE afhj.inventory SET curr_amount = curr_amount + %s WHERE store = %s AND product_num = %s", (amountToAdd ,store, product))
+                    inventoryInfo = crs.execute("SELECT store, curr_amt, max_amt FROM iventory WHERE product_num = %s", (item[0])).fetchone()
+                    productName = crs.execute("SELECT name FROM bmart_products WHERE upc = %s", (item[3])).fetchone()
+                    
+                    print("Store #" + inventoryInfo[0] + " now has " + inventoryInfo[1] + "/" + inventoryInfo[2] + " " + productName[0])
 
-            except mysql.connector.Error as err:  
+            except mysql.connector.Error as err:
 
                 print("Error adding new Inventory to the Database", cnx.statement, str(err))
 
@@ -201,18 +205,9 @@ def stock(store, shipment, shipment_items):
   
     cnx.close()
 
-    """
-    Returns should include
-
-    Details about the shipment that was just received, as was provided by the vendor (i.e. what the shipment was supposed to contain)
-    Note: Depending on how you interpreted the relationship between reorders and shipments, this may mean different things to your project group than to others.
-    A list of the shipment items and their quantities that were just stocked, as was physically identified by the stocker (i.e. what the shipment actually contained)
-    A list of any inventory discrepancies between the shipment promised by the vendor and the shipment received by the store
-
-    """
-
 
 def online_order(store, customer, order_items):
+
     """
     Document here
     """
@@ -233,7 +228,165 @@ def online_order(store, customer, order_items):
     The total price for that order, based on the current store price for each of those items.
 
     """
-    pass
+    cnx = get_connection()
+
+    if cnx is None or not cnx.is_connected():
+        raise ValueError("Failed to connect to the database")
+    
+    try:
+        with cnx.cursor() as cursor:
+            
+            try:
+        
+                valid_customer_query = "SELECT * from customer where customer_id = %s;" 
+                cursor.execute(valid_customer_query, (customer,)) # Using the 1 element tuple method
+                customer_info = cursor.fetchone() # Gets the first customer that matches the customer_id since they are unique.
+            
+            
+                #Checking if the customer is valid. If not valid we display an error message
+                if customer_info is None:
+                    print(f"Urghhh {customer_info} is invalid try again!!!")
+                    return
+            
+            except mysql.connector.Error as err:
+                print("Error fetching Data from Database", cnx.statement, str(err))
+                return
+        
+            try:
+            
+                #Query to get the inventory of a specific store specificially the product and the amount of that product
+                inventory_query = "SELECT product_num, curr_amt from inventory where store = %s;"
+                cursor.execute(inventory_query, (store,))
+                store_inventory = cursor.fetchall() #If we choose store 1, we get all the products of this store with their respective quantities.
+            
+            except mysql.connector.Error as err:
+                print("Error fetching Data from Database", cnx.statement, str(err))
+                return
+
+            inventory_dictionary = {}
+            #Creating a dictionary for efficient lookups. The key would be the product number and the value would be the product quantity.
+            for product in store_inventory:
+                product_num = product[0] 
+                curr_amt = product[1]
+                inventory_dictionary[product_num] = curr_amt
+
+
+            order_error = [] # Creating a list to hold keep track of items that cuase error.
+            order_total_price = 0
+
+            #Getting the specific quantity and product number for the items in upcoming order
+            for product in order_items: 
+                product_num = product[0]
+                product_quantity = product[1]
+
+                try:
+
+                    available_inventory = inventory_dictionary[product_num] # check if this is actually getting the thing
+                    
+                #If there is not enough inventory we display an error of the items there was not enough inventory for
+                    if available_inventory < product_quantity:
+                        order_error.append(product_num)
+                        print(f"Urghh not enough store inventory for {product_num}. Ordered: {product_quantity}, Inventory: {available_inventory}. Checking nearby stores")
+
+                    else: # If there is enough inventory we compute query to find the price of each product in order
+                        order_total_price_query = "SELECT local_price FROM inventory WHERE product_num = %s AND store = %s"
+                        cursor.execute(order_total_price_query, (product_num, store))
+                        product_price = cursor.fetchone()
+                        total_product_cost = product_price[0] * product_quantity # Multiply the price of the product with the quanity ordered
+                        order_total_price += total_product_cost # Now we add all of the individual product cost to compute entire order cost 
+                
+                except mysql.connector.Error as err:
+                    print("Error fetching Data from Database", cnx.statement, str(err))
+                return       
+
+            if order_error:
+                order_error_items = "" # Empty string to be able to add all failed items to print statement 
+
+                for item in order_error: # We loop through all the items that caus error and print them out 
+                    order_error_items = order_error_items + item + ","
+                    
+                print(f"urghh!your current store does not have enoguh stock for the following products: {order_error_items} ")
+                print("Checking other stores in your state with enough stock for your order")
+
+                inventory_check = True
+                
+                
+                try:
+                    for product in order_items:
+                        product_num = product[0]
+                        product_quantity = product[1]
+
+                        #Query to find other state store in the area that can fuilffill the entire order
+                        other_stores_query = " SELECT store_num, sum(curr_amt) FROM inventory JOIN store on inventory.store = store.store_num" \
+                        "AND product_num = %s GROUP BY store_num HAVING curr_amt >= %s"
+
+                        cursor.execute(other_stores_query, (product_num, product_quantity))
+                        state_store = cursor.fetchall()
+
+                        if not state_store:
+                            inventory_check = False
+                            break
+                
+                except mysql.connector.Error as err:
+                    print("Error fetching Data from Database", cnx.statement, str(err))
+                    return
+                
+                if inventory_check:
+                    print("Guess what! Your store couldnt fulfill the order but these stores in yoru state can")
+                else: 
+                    print("Sorry buddy no stores in your state can fulffill your entire order")
+                    return
+
+
+                #If the order can be placed then we reflect this on database as a purchase
+                order_placed_query = """INSERT into purchases (purchase_date, price, online_order, is_delivered, customer) 
+                VALUES (%s,%s, TRUE, FALSE, %s)"""
+                
+                cursor.execute(order_placed_query, (order_total_price, customer))
+                order_tracker_details = cursor.lastrowid
+                
+
+                try:
+                    for product in order_items:
+                        product_num = product[0]
+                        product_quantity = product[1]
+                        products_insert_query = "INSERT into order_items(order_id, product, quantity) VALUES (%s, %s, %s)"
+                
+                        cursor.execute(products_insert_query, (order_tracker_details, product_num, product_quantity))
+                
+                except mysql.connector.Error as err:
+                    print("Error fetching Data from Database", cnx.statement, str(err))
+                    return
+                
+                
+                try:
+                    for product in order_items:
+                        product_num = product[0]
+                        product_quantity = product[1]
+                        
+                        #Calculating the new quantity available in the store after the order
+                        updated_quantity = available_inventory - product_quantity
+                        quantity_query = "UPDATE inventory SET curr_amt = %s where store = %s  AND product_num = %s"
+                        cursor.execute( quantity_query, (updated_quantity, store, product_num))
+                
+                    cnx.commit()
+                except mysql.connector.Error as err:
+                    print("Error fetching Data from Database", cnx.statement, str(err))
+                    return
+                    
+                   
+                print("order succesful total price:")
+                print(f"customer info: {customer_info}")
+                print("ordered items:")
+                    
+                for product in order_items:
+                    print(f"Products; {product [0]}, Quantity: {product[1]}")
+
+    except mysql.connector.Error as err:
+        print(f"Error: {str(err)}")
+        cnx.rollback()
+    finally:
+        cnx.close()
 
 
 if __name__ == "__main__":

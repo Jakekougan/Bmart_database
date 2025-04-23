@@ -3,6 +3,18 @@ CREATE TABLE types (
 	type_name VARCHAR(30) PRIMARY KEY
 );
 
+DROP TABLE IF EXISTS vendor;
+CREATE TABLE vendor (
+	name VARCHAR(64)PRIMARY KEY
+);
+
+DROP TABLE IF EXISTS brands;
+CREATE TABLE brands (
+	brand_name VARCHAR(30) PRIMARY KEY,
+	vendor_name VARCHAR(64) NOT NULL,
+	FOREIGN KEY (vendor_name) REFERENCES vendor(name)
+);
+
 DROP TABLE IF EXISTS products;
 CREATE TABLE bmart_products (
 	upc CHAR(12) PRIMARY KEY,
@@ -16,13 +28,6 @@ CREATE TABLE bmart_products (
     unit_price DECIMAL(10, 2) NOT NULL,
 	brand_name VARCHAR(30),
 	FOREIGN KEY (brand_name) REFERENCES brands(brand_name)
-);
-
-DROP TABLE IF EXISTS brands;
-CREATE TABLE brands (
-	brand_name VARCHAR(30) PRIMARY KEY,
-	vendor_name VARCHAR(64) NOT NULL,
-	FOREIGN KEY (vendor_name) REFERENCES vendor(name)
 );
 
 DROP TABLE IF EXISTS store;
@@ -46,9 +51,16 @@ CREATE TABLE hrs_operating (
 	closing_time TIME NOT NULL
 );
 
-DROP TABLE IF EXISTS vendor;
-CREATE TABLE vendor (
-	name VARCHAR(64)PRIMARY KEY
+DROP TABLE IF EXISTS shipment;
+CREATE TABLE shipment (
+	shipment_no INT AUTO_INCREMENT PRIMARY KEY,
+	estimated_delivery TIMESTAMP NOT NULL,
+	actual_arrival TIMESTAMP NOT NULL,
+	delivered BOOLEAN NOT NULL,
+    	store INT,
+    	vendor VARCHAR(64),
+	FOREIGN KEY (store) REFERENCES store(store_num),
+	FOREIGN KEY (vendor) REFERENCES vendor(name)
 );
 
 DROP TABLE IF EXISTS reorder_requests;
@@ -67,6 +79,7 @@ CREATE TABLE reorder_requests(
 	shipment_no INT,
 	FOREIGN KEY (shipment_no) REFERENCES shipment(shipment_no)
     );
+    
 
 DROP TABLE IF EXISTS customers;
 CREATE TABLE customers(
@@ -94,26 +107,21 @@ CREATE TABLE purchases(
 
 DROP TABLE IF EXISTS order_items;
 CREATE TABLE order_items (
-	order_id INT, 
-	product CHAR(12),
-	quantity INT,
-	PRIMARY KEY (order_id, product),
-	FOREIGN KEY (order_id) REFERENCES purchases(purchase_id),
-	FOREIGN KEY (product) REFERENCES bmart_products(upc)
-);
+  order_id int NOT NULL,
+  product char(12) NOT NULL,
+  quantity int DEFAULT NULL,
+  inventory_id int NOT NULL,
+  purchase_id int NOT NULL,
+  PRIMARY KEY (order_id, product),
+  KEY product (product),
+  KEY order_items_ibfk_3 (inventory_id),
+  KEY order_items_ibfk_4 (purchase_id),
+  CONSTRAINT order_items_ibfk_1 FOREIGN KEY (order_id) REFERENCES purchases (purchase_id),
+  CONSTRAINT order_items_ibfk_2 FOREIGN KEY (product) REFERENCES bmart_products (upc),
+  CONSTRAINT order_items_ibfk_3 FOREIGN KEY (inventory_id) REFERENCES inventory (inventory_id),
+  CONSTRAINT order_items_ibfk_4 FOREIGN KEY (purchase_id) REFERENCES purchases (purchase_id)
+);;
 
-DROP TABLE IF EXISTS shipment;
-CREATE TABLE shipment (
-	shipment_no INT AUTO_INCREMENT PRIMARY KEY,
-	estimated_delivery TIMESTAMP NOT NULL,
-	actual_arrival TIMESTAMP NOT NULL,
-	delivered BOOLEAN NOT NULL,
-    	store INT,
-    	vendor VARCHAR(64),
-	FOREIGN KEY (store) REFERENCES store(store_num),
-	FOREIGN KEY (vendor) REFERENCES vendor(name),
-);
-	
 DROP TABLE IF EXISTS inventory;
 CREATE TABLE inventory (
 	inventory_id INTEGER AUTO_INCREMENT PRIMARY KEY,
