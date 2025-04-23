@@ -16,11 +16,17 @@ def mostSoldProduct():
 def mostSoldProductByStore(storeNum):
     """
     """
+    cnx = get_connection()
+    crs = cnx.cursor()
+    item = crs.execute("SELECT inventory.product, SUM(order_items.quantity) AS Total Sold FROM afhj.order_items RIGHT JOIN inventory ON order_items.inventory_id = inventory.inventory_id WHERE inventory.store = %s  GROUP BY inventory.product ORDER BY `Total Sold` ASC LIMIT 1", (storeNum,)).fetchone()
+    print(item[0] + "Sold:")
+    print(item[1] + "units")
 
 def mostExpensiveByStore(storeNum):
     """
     """
-    
+    cnx = get_connection()
+    crs = cnx.cursor()
 
 def leastSoldByStore(storeNum):
     """
@@ -34,7 +40,7 @@ def LifetimeSalesbyStore(storeNum):
     cnx = get_connection()
     crs = cnx.cursor()
 
-    storeSales = crs.execute("SELECT SUM(price) AS lifesales FROM 
+    storeSales = 
 
     print("Store #" + )
     print("Address: " +)
@@ -54,3 +60,5 @@ def storeInventorySize(storeNum):
 
     cnx = get_connection()
     crs = cnx.cursor()
+
+    crs.execute("SELECT SUM(max_amt) AS maxInventory FROM afhj.inventory WHERE store = %s", (storeNum))
