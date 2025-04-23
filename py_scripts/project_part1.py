@@ -3,28 +3,29 @@ import mysql.connector
 
 def reorder(store):
     """
-    Executes a reorder requests for Bmart
-    """
-    #Check Database for needed products
+    Executes reorder requests for Bmart.
 
-    #Checks previous reorder requests and shipments to make sure we haven't already ordered needed items
+    Parameters:
+    store (int): Store ID used to identify store that has inventory that needs to be ordered.
 
-    #Determine Final items and item amounts needed
+    Steps:
+    - Check current inventory
+    - Subtract pending reorder requests and shipments
+    - Determine final reorder quantities
+    - Submit reorder requests to vendors
 
-    #Send those orders to the vendors
+    If successful:
+    - Prints products reordered and quantities
+    - Prints reorders per vendor
+    - Prints total cost
 
-    #Store redorder in Database
-
-    """
-    Retuns should include
-
-    A list of the products reordered and the quantities for each
-    A list of how many reorders requests were placed with each vendor
-    The total price of the reorders, based upon the current price agreed upon between BMart and the vendor.
+    If any failures:
+    - Rolls back changes and prints error
     """
     cnx = get_connection()
     with cnx.cursor() as crs:
         try:
+
             # First, get the amount of products that need to be ordered according to the inventory.
             crs.execute('SELECT product_num, (max_amt-curr_amt) FROM inventory WHERE store=%s', (store,))
             reorder_information = crs.fetchall()
@@ -60,6 +61,10 @@ def reorder(store):
             vendor_amounts = {}
             total_cost = 0
 
+            # Before using the final reorder list to create insert statements for each product,
+            # use start_transaction() to ensure that either all or none of the inserts go through.
+            cnx.start_transaction()
+
             # Use a for loop to insert a reorder request into the database for every product that needs to be ordered.
             for product_num, quantity in final_reorder_list:
 
@@ -74,14 +79,17 @@ def reorder(store):
                 vendor = crs.fetchone()[0]
                 
                 # Now that we have all of the necessary information, we can create a reorder request for each product.
-                #crs.execute('INSERT INTO reorder_requests (order_date, product, Product_qty, store, cost, viewed, vendor) VALUES (CURRENT_TIMESTAMP, %s, %s, %s, %s, 0, %s)', (product_num, quantity, store, cost, vendor))
-                #cnx.commit()
+                crs.execute('INSERT INTO reorder_requests (order_date, product, Product_qty, store, cost, viewed, vendor) VALUES (CURRENT_TIMESTAMP, %s, %s, %s, %s, 0, %s)', (product_num, quantity, store, cost, vendor))
+                
 
                 # Store the reordered amounts and quantity, track how many reorder requests are going to each vendor, and the final cost.
                 reordered_products.append((product_num, quantity))
                 vendor_amounts[vendor] = vendor_amounts.get(vendor, 0) + 1
                 total_cost += cost
-                
+            
+            # Once all of the reorder INSERT statements have been created, commit all of them.
+            cnx.commit()
+
             print("Products reordered and quantities:")
             for upc, qty in reordered_products:
                 print(f"UPC: {upc}, Quantity: {qty}")
@@ -92,6 +100,7 @@ def reorder(store):
 
             print(f"\nTotal cost of reorder requests: ${total_cost:.2f}")
 
-        except mysql.connector.Error as err:
-            print("Error fetching reorder information", str(err))
+        except (mysql.connector.Error, ValueError) as err:
+            cnx.rollback()
+            print("Error during reorder:", str(err))
     cnx.close()
