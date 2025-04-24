@@ -1,4 +1,6 @@
-from backend import get_connection
+import mysql.connector
+from mysql.connector import errorcode
+from py_scripts.db_connection import get_connection
 
 def mostSoldProduct():
     """

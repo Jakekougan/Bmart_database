@@ -1,6 +1,6 @@
 import mysql.connector
 from mysql.connector import errorcode
-from datetime import datetime
+from py_scripts.project_part3 import stock
 
 
 def get_connection() -> mysql.connector.connection:
@@ -25,9 +25,6 @@ def get_connection() -> mysql.connector.connection:
             raise mysql.connector.Error(err)
 
     return cnx
-
-
-
 
 def reorder(store):
     """
@@ -128,72 +125,7 @@ def vendor_shipment(store, deliverydate, reorders, shipmentitems):
 
     pass
 
-def stock(store, shipment, shipment_items):
-    """
-    Author: Hayden Warfield 
-
-    Shipment Items should be a list of lists that contains. Inside each nested list should be the product's UPC at index 0 
-    and the product quanitity at index 1.
-    ex.[[123456789012, 6], [098765432109, 7], [019283746574, 8]]
-
-    OTher parameter suff
-    wnwfawnf
-    """
-
-    #Stock processes when there are new shipment and the date of restock.
-
-    cnx = get_connection()
-    with cnx.cursor() as crs:
-
-        #Updates database to indicate that an order arrived and when arrived where
-        try:
-
-            current_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            crs.execute("UPDATE afhj.shipment SET actual_arrival = %s WHERE shipment_no = %s and store = %s", (current_timestamp, shipment, store))
-            print('Shipment #' + shipment + " arrived at Store #" + store + "at " + current_timestamp)
-            
-            #Gets the details of the original reorder request to Match sure the sipment contains the desired product and amount
-            #Retrives the items ordered
-            ordered_items = crs.execute("SELECT product, Product_qty FROM afhj.reorder_requests WHERE Store = %s AND shipment_no = %s", (store, shipment)).fetchall()
-            
-            for item in shipment_items:
-
-                #Compares to see if Order is correct 
-                if (item[0], item[1]) in ordered_items:
-
-
-                    crs.execute("UPDATE afhj.shipment SET delivered = 1 WHERE shipment = %s AND store = %s" , (shipment, store))
-                    print("Contained:" + ordered_items[1] + " " + ordered_items[0])
-
-                #Prints out What Item is wrong in contents
-                else:
-                    wrongitemName = crs.execute("SELECT name FROM afhj.bmart_products WHERE upc = %s", (item[0])).fetchone()
-                    orderedItemName = crs.execute("SELECT name FROM afhj.bmart_products WHERE upc = %s", (ordered_items[0])).fetchone()
-                    print("Wrong Product/Quantity!")
-                    print("Order Contained: " + item[1] + " " + wrongitemName[0])
-                    print("Was supposed to contain: " + ordered_items[1] + " " + orderedItemName[0])
-                
-
-            for item in shipment_items:
-            #Gets quantities and Products regarding the new stock
-    
-                amountToAdd = item[1]
-                product = item[0]
-                crs.execute("UPDATE afhj.inventory SET curr_amount = curr_amount + %s WHERE store = %s AND product_num = %s", (amountToAdd ,store, product))
-
-                inventoryInfo = crs.execute("SELECT store, curr_amt, max_amt FROM iventory WHERE product_num = %s", (item[0])).fetchone()
-                productName = crs.execute("SELECT name FROM bmart_products WHERE upc = %s", (item[0])).fetchone()
-                
-                print("Store #" + inventoryInfo[0] + " now has " + inventoryInfo[1] + "/" + inventoryInfo[2] + " " + productName[0])
-
-        except mysql.connector.Error as err:
-
-            print("Error adding new Inventory to the Database", crs.statement, str(err))
-
-    crs.commit()
-    cnx.close()
-
-
+  
 def online_order(store, customer, order_items):
 
     """
@@ -380,3 +312,5 @@ def online_order(store, customer, order_items):
 if __name__ == "__main__":
     get_connection()
     print("Success!")
+
+    stock(93, 1, [100000000031, 5])
