@@ -21,6 +21,8 @@ def mostSoldProduct():
     print(item[0] + "Sold:")
     print(item[1] + "units")
 
+    cnx.close()
+
 def mostSoldProductByStore(storeNum):
     """
     Author: Hayden Warfield
@@ -41,6 +43,8 @@ def mostSoldProductByStore(storeNum):
     #Prints the most sold product in the specified store to the console.
     print(item[0] + "Sold:")
     print(item[1] + "units")
+
+    cnx.close()
 
 
 def leastSoldByStore(storeNum):
@@ -63,6 +67,8 @@ def leastSoldByStore(storeNum):
     print(item[0] + "Sold:")
     print(item[1] + "units")
 
+    cnx.close()
+
 def lifetimeSalesbyStore(storeNum):
     """
     Author: Hayden Warfield
@@ -82,6 +88,8 @@ def lifetimeSalesbyStore(storeNum):
     #Prints lifetime sales and store number to console
     print("Store #" + str(storeNum))
     print("Lifetime Sales: $" + str(LifeSales[0]))
+
+    cnx.close()
 
 def storeInventorySize(storeNum):
     """
@@ -104,4 +112,28 @@ def storeInventorySize(storeNum):
     print("Store #" + str(storeNum))
     print("Inventory Size: " + str(inventorySize[0]))
 
+    cnx.close()
+
+
+def mostReorderedProductByStore(storeNum):
+    """
+    Author: Hayden Warfield
+    
+    Retrieves and prints the product that a specified Bmart store reorders the most
+
+    Parameter:
+        storeNum (int): The store number for which to determine inventory size.
+    """
+
+    cnx = get_connection()
+    crs = cnx.cursor()
+
+    reorderNum = crs.execute("SELECT product, SUM(product_qty) AS unitsRedordered FROM afhj.reorder_requests GROUP BY product ORDER BY unitsReordered DESC LIMIT 1").fetchone()
+    productName = crs.execute("SELECT name FROM afhj.bmart_products WHERE upc = %s", reorderNum[0]).fetchone()
+
+    print("Store #" + str(storeNum))
+    print("Most Reordered product is: " + str(reorderNum[0]) + " " + str(productName[0]))
+    print("Has reordered: " + str(reorderNum[1]) + " units")
+
+    cnx.close()
 
