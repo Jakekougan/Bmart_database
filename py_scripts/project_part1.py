@@ -26,6 +26,9 @@ def reorder(store):
     with cnx.cursor() as crs:
         try:
 
+            # Use start_transaction to maintain atomicity for all of the queries that will be used in this function.
+            cnx.start_transaction()
+            
             # First, get the amount of products that need to be ordered according to the inventory.
             crs.execute('SELECT product_num, (max_amt-curr_amt) FROM inventory WHERE store=%s', (store,))
             reorder_information = crs.fetchall()
@@ -61,10 +64,6 @@ def reorder(store):
             vendor_amounts = {}
             total_cost = 0
 
-            # Before using the final reorder list to create insert statements for each product,
-            # use start_transaction() to ensure that either all or none of the inserts go through.
-            cnx.start_transaction()
-
             # Use a for loop to insert a reorder request into the database for every product that needs to be ordered.
             for product_num, quantity in final_reorder_list:
 
@@ -79,7 +78,7 @@ def reorder(store):
                 vendor = crs.fetchone()[0]
                 
                 # Now that we have all of the necessary information, we can create a reorder request for each product.
-                crs.execute('INSERT INTO reorder_requests (order_date, product, Product_qty, store, cost, viewed, vendor) VALUES (CURRENT_TIMESTAMP, %s, %s, %s, %s, 0, %s)', (product_num, quantity, store, cost, vendor))
+                #crs.execute('INSERT INTO reorder_requests (order_date, product, Product_qty, store, cost, viewed, vendor) VALUES (CURRENT_TIMESTAMP, %s, %s, %s, %s, 0, %s)', (product_num, quantity, store, cost, vendor))
                 
 
                 # Store the reordered amounts and quantity, track how many reorder requests are going to each vendor, and the final cost.
@@ -104,3 +103,5 @@ def reorder(store):
             cnx.rollback()
             print("Error during reorder:", str(err))
     cnx.close()
+
+reorder(1)

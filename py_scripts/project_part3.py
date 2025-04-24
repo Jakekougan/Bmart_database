@@ -1,7 +1,7 @@
 from datetime import datetime
 import mysql.connector
 from mysql.connector import errorcode
-from py_scripts.db_connection import get_connection
+from db_connection import get_connection
 
 def stock(store, shipment, shipment_items):
     """
