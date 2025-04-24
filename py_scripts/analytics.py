@@ -14,8 +14,8 @@ def mostSoldProduct():
     crs = cnx.cursor()
 
     #Queries the Database for most sold product across all Bmart stores
-    item = crs.execute("SELECT product, SUM(quantity) AS Total Sold FROM afhj.order_items GROUP BY product ORDER BY Total Sold DESC LIMIT 1").fetchone()
-
+    crs.execute("SELECT product, SUM(quantity) AS Total Sold FROM afhj.order_items GROUP BY product ORDER BY Total Sold DESC LIMIT 1")
+    item = crs.fetchall()
     #Prints the most sold product to the console
     print("Most Sold Product across all of Bmart:")
     print(item[0] + "Sold:")
@@ -38,8 +38,8 @@ def mostSoldProductByStore(storeNum):
     crs = cnx.cursor()
 
     #Queries the Database for the MOst sold product in the store
-    item = crs.execute("SELECT inventory.product, SUM(order_items.quantity) AS Total Sold FROM afhj.order_items RIGHT JOIN inventory ON order_items.inventory_id = inventory.inventory_id WHERE inventory.store = %s  GROUP BY inventory.product ORDER BY `Total Sold` DESC LIMIT 1", (storeNum,)).fetchone()
-
+    crs.execute("SELECT inventory.product, SUM(order_items.quantity) AS Total Sold FROM afhj.order_items RIGHT JOIN inventory ON order_items.inventory_id = inventory.inventory_id WHERE inventory.store = %s  GROUP BY inventory.product ORDER BY `Total Sold` DESC LIMIT 1", (storeNum,)).fetchone()
+    item = crs.fetchall()
     #Prints the most sold product in the specified store to the console.
     print(item[0] + "Sold:")
     print(item[1] + "units")
@@ -62,7 +62,8 @@ def leastSoldByStore(storeNum):
     crs = cnx.cursor()
 
     #Queries the Database for the least sold product by store
-    item = crs.execute("SELECT inventory.product, SUM(order_items.quantity) AS Total Sold FROM afhj.order_items RIGHT JOIN inventory ON order_items.inventory_id = inventory.inventory_id WHERE inventory.store = %s  GROUP BY inventory.product ORDER BY `Total Sold` ASC LIMIT 1", (storeNum,)).fetchone()
+    crs.execute("SELECT inventory.product, SUM(order_items.quantity) AS Total Sold FROM afhj.order_items RIGHT JOIN inventory ON order_items.inventory_id = inventory.inventory_id WHERE inventory.store = %s  GROUP BY inventory.product ORDER BY `Total Sold` ASC LIMIT 1", (storeNum,))
+    item = crs.fetchall()
     print("Least Sold Item in Store #" + str(storeNum))
     print(item[0] + "Sold:")
     print(item[1] + "units")
@@ -83,7 +84,8 @@ def lifetimeSalesbyStore(storeNum):
     crs = cnx.cursor()
 
     #Queries the Database for the Lifetime sales of the specified store
-    LifeSales = crs.execute("SELECT SUM(price) AS lifeSales FROM afhj.purchases LEFT JOIN afhj.order_items ON purchases.purchase_id = order_items.purchases LEFT JOIN inventory ON order_items.inventory_id  = inventory.inventory_id WHERE store = %s", (storeNum,)).fetchone()
+    crs.execute("SELECT SUM(price) AS lifeSales FROM afhj.purchases LEFT JOIN afhj.order_items ON purchases.purchase_id = order_items.purchases LEFT JOIN inventory ON order_items.inventory_id  = inventory.inventory_id WHERE store = %s", (storeNum,))
+    LifeSales = crs.fetchall()
 
     #Prints lifetime sales and store number to console
     print("Store #" + str(storeNum))
@@ -128,8 +130,10 @@ def mostReorderedProductByStore(storeNum):
     cnx = get_connection()
     crs = cnx.cursor()
 
-    reorderNum = crs.execute("SELECT product, SUM(product_qty) AS unitsRedordered FROM afhj.reorder_requests GROUP BY product ORDER BY unitsReordered DESC LIMIT 1").fetchone()
-    productName = crs.execute("SELECT name FROM afhj.bmart_products WHERE upc = %s", reorderNum[0]).fetchone()
+    crs.execute("SELECT product, SUM(product_qty) AS unitsRedordered FROM afhj.reorder_requests GROUP BY product ORDER BY unitsReordered DESC LIMIT 1")
+    reorderNum = crs.fetchall()
+    crs.execute("SELECT name FROM afhj.bmart_products WHERE upc = %s", (reorderNum[0],))
+    productName = crs.fetchall()
 
     print("Store #" + str(storeNum))
     print("Most Reordered product is: " + str(reorderNum[0]) + " " + str(productName[0]))
