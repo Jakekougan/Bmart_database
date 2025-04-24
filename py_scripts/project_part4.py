@@ -6,23 +6,22 @@ import mysql.connector
 def online_order(store, customer, order_items):
 
     """
-    Document here
-    """
+    Description: 
+    -This function will process an online order placed by a customer
+    -The function checks if the products are found at a specific store
+    -If there are products that are not in a store or if a store does not have enough inventory it searches for stores in same state that could potentiall fullfill
+    -If the order can be fulffilled at the store we are lookign at we process the order and update the database
+    
+    Parameters:
+    -Store: This is an integer that the user passes in for the store they want to look at
+    -Customer: This is an integer that processes the customer who is placing the order
+    -Order_items: This is a dictionary that has the product_num as the key and the value would be quantity of that product.
 
-    #When customer orders check to see if sufficent stock is in place
-
-    #If stock is sufficent place order and put it in the database. Adjust inventory records as needed
-
-    #If not sufficent iventory then print out to console what is insufficent
-
-    #Check and print if any other stores in the state can fuffill your inventory
-
-    """
-    Returns should include
-
-    Details about the order they just placed, including their own information for confirmation
-    A list of the ordered items and their quantities
-    The total price for that order, based on the current store price for each of those items.
+    Returns:
+    -In this case we dont return anything in specific we just print out to the console:
+        -If there where any inventory concerns for products or not enough quantity
+        -if there are alternative stores if the customers store cannot fullfill the order
+        -If order does go through we display the customers information as well as a order summary
 
     """
     print("Starting the online order process!!!")

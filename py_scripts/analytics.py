@@ -1,7 +1,7 @@
+from datetime import datetime
+from db_connection import get_connection
 import mysql.connector
-from mysql.connector import errorcode
-from py_scripts.db_connection import get_connection
-
+    
 def mostSoldProduct():
     """
     Author: Hayden Warfield
@@ -137,3 +137,17 @@ def mostReorderedProductByStore(storeNum):
 
     cnx.close()
 
+def different_products_sold(storeNum):
+    cnx = get_connection()
+    crs = cnx.cursor()
+    
+    
+    distinct_product_query = " SELECT COUNT(DISTINCT inventory.product_num) FROM order_items JOIN inventory ON order_items.inventory_id = inventory.inventory_id WHERE inventory.store = %s" 
+    crs.execute(distinct_product_query, (storeNum, ))
+    how_many_disticnt_products = crs.fetchone()
+    answer = how_many_disticnt_products[0]
+
+    print(f"store: {storeNum} sold this many different products: {answer} ")
+
+if __name__ == "__main__":
+    different_products_sold(2)
