@@ -235,7 +235,8 @@ def online_order(store, customer, order_items):
                     
 
 if __name__ == "__main__":
-    test_items = {"100000000003": 20}
-    reorder(1)
+    #test_items = {"100000000003": 20}
+    stock(1, 93, [[100000000001, 5]])
+    #reorder(1)
     #online_order(2, 1, test_items)
 

@@ -78,7 +78,7 @@ def reorder(store):
                 vendor = crs.fetchone()[0]
                 
                 # Now that we have all of the necessary information, we can create a reorder request for each product.
-                #crs.execute('INSERT INTO reorder_requests (order_date, product, Product_qty, store, cost, viewed, vendor) VALUES (CURRENT_TIMESTAMP, %s, %s, %s, %s, 0, %s)', (product_num, quantity, store, cost, vendor))
+                crs.execute('INSERT INTO reorder_requests (order_date, product, Product_qty, store, cost, viewed, vendor) VALUES (CURRENT_TIMESTAMP, %s, %s, %s, %s, 0, %s)', (product_num, quantity, store, cost, vendor))
                 
 
                 # Store the reordered amounts and quantity, track how many reorder requests are going to each vendor, and the final cost.
@@ -103,5 +103,3 @@ def reorder(store):
             cnx.rollback()
             print("Error during reorder:", str(err))
     cnx.close()
-
-reorder(1)
