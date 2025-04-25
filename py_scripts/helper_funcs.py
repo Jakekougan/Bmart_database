@@ -20,50 +20,52 @@ def upc_gen(n):
             n -=1
 
 
-def days_in_month(month):
-    month = int(month)
-    if month not in range(1,12):
-         return 0
-    calendar = {1 : 31,
-                2 : 28,
-                3 : 31,
-                4 : 30,
-                5 : 31,
-                6 : 30,
-                7 : 31,
-                8 : 31,
-                9 : 30,
-                10 : 31,
-                11 : 30,
-                12 : 31}
-    return calendar.get(month)
+
+def check_data(data):
+    '''Checks counts of outstanding and fufilled orders if sql statement comes back empty that means 0 orders have been
+        fufulled and/or are outstanding
+
+    Paramaters:
+        data (lst): a list containing the tuple from the sql query
+
+    Returns:
+        0 if there are no outstanding or fufilled reorders from a vendor
+        the amount of fuifilled or outstanding reorders '''
+    if not data:
+        return 0
+    else:
+        return data[0][0]
+
+def check_shipment(vendor, store, estimated_delivery, cnx):
+    '''Checks if an item is already apart of a planned shipment and if not creates a new one
+
+    Parameters:
+        vendor (str): vendor name
+        store (int); store ID number from the SQL table
+        estimated_delivery (datetime): the timestamp data for an order
+
+    Returns:
+        the shipment_no as an integer '''
+    try:
+        with cnx.cursor() as cursor:
+            #Check if a shipment already exists
+            ship_check = "SELECT shipment_no FROM shipment WHERE store = %s AND vendor = %s AND estimated_delivery = %s;"
+            cursor.execute(ship_check, (store, vendor, estimated_delivery))
+            existing_shipment = cursor.fetchone()
+
+            if existing_shipment:
+                shipment_no = existing_shipment[0]
+            else:
+                # Insert new shipment
+                q = "INSERT INTO shipment (estimated_delivery, delivered, store, vendor) VALUES (%s, 0, %s, %s);"
+                cursor.execute(q, (estimated_delivery, store, vendor))
+                cursor.execute("SELECT shipment_no FROM shipment ORDER BY shipment_no DESC LIMIT 1;")
+                shipment_no = cursor.fetchone()[0]
+        return shipment_no
+
+    except cnx.mysql.connector.Error as err:
+        print("Error while executing", cursor.statement, '--', str(err))
+        cnx.rollback()
 
 
-def date_plus(date, days_forward):
-    date = (int(date[0]), int(date[1]), int(date[2]) )
-    month : int = date[0]
-    yr : int = date[2]
 
-    days_per_month : int = days_in_month(month) # type: ignore
-    day : int = date[1]
-
-    for i in range(1, days_forward + 1): # type: ignore
-            day += 1
-            days_forward -=1
-
-            #in case the amount of days in the given month is surpassed, go to next month
-            if day >= days_per_month:
-                month += 1
-                day = 1
-                days_forward -= 1
-                days_per_month = days_in_month(month) # type: ignore
-
-                #if we are about to pass december go back to january
-                if month > 12:
-                     month = 1
-                     yr += 1
-
-    return str(month) +"-" + str(day) + "-" + str(yr)
-
-
-print(date_plus((4,18, 2025), 20))
