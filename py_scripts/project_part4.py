@@ -60,11 +60,11 @@ def online_order(store, customer, order_items):
                     return
                 
                 inventory_dictionary = {}
-                #Initialized a dictionary for available inventory where key is the upc and the quantity of that product is the quantity.
+                #Initialized a dictionary for available inventory where key is the product_num and the quantity of that product is the value.
                 for product in inventory_available:
-                    upc = product[0]
+                    product_num = product[0]
                     quantity = product[1]
-                    inventory_dictionary[upc] = quantity
+                    inventory_dictionary[product_num] = quantity
                 print(f"Here is your stores inventory: {inventory_dictionary}")
             except mysql.connector.Error as err:
                 print("Error getting inventory from the database:", str(err))
@@ -76,6 +76,7 @@ def online_order(store, customer, order_items):
                 cursor.execute(store_state_query, (store,))
                 state = cursor.fetchone() 
 
+                #If state contains no stores we print an error
                 if not state:
                     print("Urggh your store does not exist")
                     return
@@ -90,33 +91,33 @@ def online_order(store, customer, order_items):
             products_problem = [] # We store products we cant fullfill as a list to later dipslay in console
             total_order_cost = 0 
 
-            for upc, quantity in order_items.items():
+            for product_num, quantity in order_items.items():
                 print(f"Checking the upc for amount requested: {quantity}")
                 #Checking if the UPC is valid before proccessing whether store has enough and price.
-                if upc not in inventory_dictionary:
-                    products_problem.append(upc) #Adding to the lsit everytime a product causes an erorr or cant be fullfilled
+                if product_num not in inventory_dictionary:
+                    products_problem.append(product_num) #Adding to the lsit everytime a product causes an erorr or cant be fullfilled
                     print(f"urghhh Your product {upc} is not in our inventory")
                     continue
                 
-                store_quantity = inventory_dictionary[upc] # Accessing the quantity available at store from the value of the upc in the dictioanary
+                store_quantity = inventory_dictionary[product_num] # Accessing the quantity available at store from the value of the upc in the dictioanary
                 if store_quantity < quantity: # Checking to see if enough of the product is availble if not we add to list of problems
-                    products_problem.append(upc)
+                    products_problem.append(product_num)
                     print(f"Urghhh there is not enough inventory. We have {store_quantity},we need{quantity}")
                 else:
                     #If there is enough to fulfill that product we calculate the price
                     product_price_query = "SELECT local_price FROM inventory WHERE product_num = %s AND store = %s"
-                    cursor.execute(product_price_query, (upc,store))
+                    cursor.execute(product_price_query, (product_num,store))
 
                     prices = cursor.fetchone()
                     #If we have prices for the item we multiply by how much customer wants. If no price we display an error.
                     if prices:
                         price_product = prices[0]
                         total_for_product = price_product * quantity 
-                        total_order_cost += total_for_product
+                        total_order_cost += total_for_product # Add the total cost of each item
                     else:
                         print(f"Price not found for that product")
             
-            #If there are products that cause an error we display and error and check if other stores can solve this
+            #If there are products that cause probelms we display and error and check if other stores can solve this
             if len(products_problem) > 0:
                 print("We dont have enough inventory for the following items: ")
 
@@ -126,12 +127,13 @@ def online_order(store, customer, order_items):
 
                 products_not_fullfillable = [] #list to keep track of the products not even other stores have enough for
                 for product in products_problem:
+                    
                     #scanning other stores in the same state
                     Other_stores_query = "SELECT store_num FROM inventory JOIN store as store on inventory.store = store.store_num WHERE store.state = %s AND inventory.product_num = %s AND inventory.curr_amt >= %s "    
                     products_order = order_items[product]
                     cursor.execute(Other_stores_query, (state_store, product, products_order ))
 
-                    other_stores = cursor.fetchall() # Gettting all Potential stores in the same state
+                    other_stores = cursor.fetchall() # Gettting all potential stores in the same state
                     stores_list = [] # once we check the potential stores we can keep track of the ones that can fulfill order
 
 
@@ -164,13 +166,13 @@ def online_order(store, customer, order_items):
                 cursor.execute(insert_order_products_query, (store, upc))
                 inventory = cursor.fetchone()
                 
-                #Extra precaucation in case we have any problems up till this point
+                #Extra precaucation in case we have any problems up till this point accesing the inventory 
                 if not inventory:
-                    print("ERROR no inventory for that upc")
+                    print("ERROR no inventory for that product_num")
                     cnx.rollback()
                     return
                 
-                inventory_id = inventory[0] #getting the ID of the inventory instance so we can insert it to table
+                inventory_id = inventory[0] #Getting the ID of the specific inventory so we can insert it to table
 
                 #Adding to the database to reflect the new order
                 print(f"Inserting your order items: upc: {upc}, quantity:{quantity}, inventory_id: {inventory_id}")
@@ -178,8 +180,8 @@ def online_order(store, customer, order_items):
                 cursor.execute(Insert_query, (order_details, upc, quantity, inventory_id, order_details))
             
             #After all the items are updated in the database we subtract the amount bought from our current inventory
-            for upc, quantity in order_items.items():
-                current_quantity = inventory_dictionary[upc]
+            for product_num, quantity in order_items.items():
+                current_quantity = inventory_dictionary[product_num]
                 new_quantity = current_quantity - quantity
                 print(f"Updating inventory for product {upc} with new amount of {new_quantity}")
                 inventory_quantity_query = " UPDATE inventory SET curr_amt = %s WHERE store = %s AND product_num = %s"
@@ -192,8 +194,8 @@ def online_order(store, customer, order_items):
             print("Your order was succesful!")
             print("Customer:", customer_valid)
             print("Here are the items ordered:")
-            for upc, quantity in order_items.items():
-                print(f"{upc}: {quantity}")
+            for product_num, quantity in order_items.items():
+                print(f"{product_num}: {quantity}")
             print(f"Your total cost for this order was {total_order_cost}")
 
 

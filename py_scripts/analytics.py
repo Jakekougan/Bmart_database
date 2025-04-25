@@ -142,16 +142,68 @@ def mostReorderedProductByStore(storeNum):
     cnx.close()
 
 def different_products_sold(storeNum):
+    """
+    - This function looks at a store provided by user and calculatea how many distinct products the store has.
+
+    Parameter: storeNum: Takes in an integer represnting the store number 
+    
+    """
     cnx = get_connection()
     crs = cnx.cursor()
     
-    
+    #Ths query coutns how mnay different products this store has sold 
     distinct_product_query = " SELECT COUNT(DISTINCT inventory.product_num) FROM order_items JOIN inventory ON order_items.inventory_id = inventory.inventory_id WHERE inventory.store = %s" 
     crs.execute(distinct_product_query, (storeNum, ))
     how_many_disticnt_products = crs.fetchone()
-    answer = how_many_disticnt_products[0]
-
+    answer = how_many_disticnt_products[0] # The count will be accessed here 
+    
+    #Print the result and displays the store they looked at and the answer to how many different products they have.
     print(f"store: {storeNum} sold this many different products: {answer} ")
 
+    cnx.close()
+
+
+def store_count():
+    """
+    -This function counts how many total bmart stores there are in total
+    -Parameters: none 
+    
+    """
+    cnx = get_connection()
+    crs = cnx.cursor()
+    
+    #selects all the data from store and counts how many different rows aka stores there are
+    total_query = "SELECT COUNT(*) FROM store"
+    crs.execute(total_query)
+    store = crs.fetchone()
+    total_stores = store[0] #This will get the value of the total we are lookign for
+
+    #Print on the console the value of totla stores
+    print(f" here are this many BVmart stores: {total_stores}")
+
+    cnx.close()
+
+def customer_count():
+    """
+    -This function goes through all the customer data and coutns the total amount of bmart customer
+    - parameters: none just print the toal amount of custoemrs
+    
+    
+    """
+    cnx = get_connection()
+    crs = cnx.cursor()
+
+    #This query gets all the data in customers and counts how many rows aka customers
+    count_query = "SELECT count(*) FROM customers"
+    crs.execute(count_query)
+
+    customers = crs.fetchone()
+    total_customers = customers[0]
+    #Print to console how many people are bmart customers
+    print(f"This is how many bmart people exist {total_customers}")
+    cnx.close()
+
+
+
 if __name__ == "__main__":
-    different_products_sold(2)
+    different_products_sold(5)
