@@ -55,7 +55,7 @@ DROP TABLE IF EXISTS shipment;
 CREATE TABLE shipment (
 	shipment_no INT AUTO_INCREMENT PRIMARY KEY,
 	estimated_delivery TIMESTAMP NOT NULL,
-	actual_arrival TIMESTAMP NOT NULL,
+	actual_arrival TIMESTAMP,
 	delivered BOOLEAN NOT NULL,
     	store INT,
     	vendor VARCHAR(64),
@@ -79,7 +79,7 @@ CREATE TABLE reorder_requests(
 	shipment_no INT,
 	FOREIGN KEY (shipment_no) REFERENCES shipment(shipment_no)
     );
-    
+
 
 DROP TABLE IF EXISTS customers;
 CREATE TABLE customers(

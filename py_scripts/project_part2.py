@@ -124,11 +124,3 @@ def vendor_shipment(store, deliverydate, reorders, shipmentitems):
 
 
 
-def main():
-    date = datetime.datetime(2025, 5, 15 , 2, 20)
-    reorders = []
-    shipment_items = {}
-    vendor_shipment(3, date, reorders, shipment_items)
-
-if __name__ == "__main__":
-    main()
